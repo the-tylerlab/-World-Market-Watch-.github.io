@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>World Market Watch - แผนที่ตลาดหุ้นโลก (เวลาไทย)</title>
+
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+        
+    <style>
+        /* 💡 การตั้งค่า Dark Mode/Light Mode */
+        :root {
+            --bg-color: #f4f7f9; 
+            --card-bg: #ffffff;
+            --text-color: #333333;
+            --open-color: #28a745; 
+            --closed-color: #dc3545; 
+            --near-color: #ffc107; 
+            --border-color: #e0e0e0;
+            --header-height-px: 60px; 
+        }
+        body.dark-mode {
+            --bg-color: #1e2124; 
+            --card-bg: #2d3135;
+            --text-color: #f1f1f1;
+            --border-color: #444444;
+        }
+        
+        /* 🛠️ CSS การกำหนดความสูงที่ถูกต้อง */
+        html, body {
+            height: 100vh;
+            margin: 0;
+            padding: 0;
+            font-family: 'Arial', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            transition: background-color 0.3s, color 0.3s;
+        }
+        .header {
+            height: var(--header-height-px); 
+            box-sizing: border-box;
+            display: flex; 
+            justify-content: space-between;
+            align-items: center;
+            background-color: var(--card-bg);
+            padding: 15px 30px;
+            border-bottom: 1px solid var(--border-color);
+        }
+        #mapid {
+            height: calc(100vh - var(--header-height-px)); 
+            width: 100%;
+        }
+
+        /* 💡 Marker Styles */
+        .market-icon {
+            background-color: #ffffff; 
+            border-radius: 50%;
+            width: 12px;
+            height: 12px;
+            border: 2px solid #ccc;
+            opacity: 0.8;
+            transition: all 0.2s ease-in-out;
+            box-shadow: 0 0 5px rgba(0, 0, 0, 0.5);
+        }
+        .market-icon.open { background-color: var(--open-color); border-color: #1a7e33; width: 16px; height: 16px; opacity: 1; animation: pulse-open 2s infinite; }
+        .market-icon.closed { background-color: var(--closed-color); border-color: #a7283c; }
+        .market-icon.near { background-color: var(--near-color); border-color: #cc9900; }
+        @keyframes pulse-open { 0% { box-shadow: 0 0 0 0 rgba(40, 167, 69, 0.4); } 70% { box-shadow: 0 0 0 10px rgba(40, 167, 69, 0); } 100% { box-shadow: 0 0 0 0 rgba(40, 167, 69, 0); } }
+        /* 🎨 Toggle Switch Styles */
+        .toggle-switch { position: relative; display: inline-block; width: 50px; height: 24px; }
+        .toggle-switch input { opacity: 0; width: 0; height: 0; }
+        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #ccc; transition: .4s; border-radius: 24px; }
+        .slider:before { position: absolute; content: ""; height: 16px; width: 16px; left: 4px; bottom: 4px; background-color: white; transition: .4s; border-radius: 50%; }
+        input:checked + .slider { background-color: var(--open-color); }
+        input:checked + .slider:before { transform: translateX(26px); }
+
+        /* Fix Tooltip/Popup colors in dark mode */
+        .dark-mode .leaflet-tooltip,
+        .dark-mode .leaflet-popup-content-wrapper,
+        .dark-mode .leaflet-popup-tip {
+            background: var(--card-bg);
+            color: var(--text-color);
+        }
+
+    </style>
+</head>
+<body class="dark-mode">
+
+    <div class="header">
+        <h1>🌎 World Market Watch</h1>
+        <div style="display: flex; align-items: center; gap: 20px;">
+            <span style="font-size: 0.9em; opacity: 0.8;">☀️ โหมดสว่าง / 🌙 โหมดมืด:</span>
+            <label class="toggle-switch">
+                <input type="checkbox" id="darkModeToggle" checked> 
+                <span class="slider"></span>
+            </label>
+        </div>
+        <div class="time-display">
+            🇹🇭 เวลาปัจจุบัน: <span id="current-time"></span>
+        </div>
+    </div>
+    
+    <div id="mapid"></div>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+        
+    <script>
+        // Data for major stock exchanges (Time is in GMT+7)
+        const markets = [
+            { id: 'TSE', name: 'Tokyo', exchange: 'TSE (Nikkei 225)', lat: 35.6895, lon: 139.6917, open: '07:00', close: '13:00', breakStart: '09:30', breakEnd: '10:30', dst: false },
+            { id: 'HKEX', name: 'Hong Kong', exchange: 'HKEX (Hang Seng)', lat: 22.3193, lon: 114.1694, open: '08:30', close: '15:00', breakStart: '11:00', breakEnd: '12:00', dst: false },
+            { id: 'SSE', name: 'Shanghai', exchange: 'SSE (Shanghai)', lat: 31.2304, lon: 121.4737, open: '08:30', close: '14:00', breakStart: '10:30', breakEnd: '12:00', dst: false },
+            { id: 'SET', name: 'Bangkok (ไทย)', exchange: 'SET', lat: 13.7563, lon: 100.5018, open: '10:00', close: '16:30', breakStart: '12:30', breakEnd: '14:00', dst: false },
+            { id: 'LSE', name: 'London (UK)', exchange: 'LSE (FTSE 100)', lat: 51.5074, lon: 0.1278, openSummer: '14:00', closeSummer: '22:30', openWinter: '15:00', closeWinter: '23:30', dst: true },
+            { id: 'XETRA', name: 'Frankfurt (DE)', exchange: 'XETRA (DAX)', lat: 50.1109, lon: 8.6821, openSummer: '14:00', closeSummer: '22:30', openWinter: '15:00', closeWinter: '23:30', dst: true },
+            { id: 'NYSE', name: 'New York (US)', exchange: 'NYSE / NASDAQ', lat: 40.7128, lon: -74.0060, openSummer: '20:30', closeSummer: '03:00', openWinter: '21:30', closeWinter: '04:00', dst: true },
+            { id: 'ASX', name: 'Sydney (AU)', exchange: 'ASX', lat: -33.8688, lon: 151.2093, open: '07:00', close: '13:00', breakStart: '', breakEnd: '', dst: false }, 
+            { id: 'TSX', name: 'Toronto (CA)', exchange: 'TSX', lat: 43.6532, lon: -79.3832, openSummer: '20:30', closeSummer: '03:00', openWinter: '21:30', closeWinter: '04:00', dst: true },
+            { id: 'TADAWUL', name: 'Riyadh (SA)', exchange: 'Tadawul', lat: 24.7136, lon: 46.6069, open: '14:00', close: '21:00', breakStart: '', breakEnd: '', dst: false },
+        ];
+
+        // Tile Layer: ใช้ CartoDB และ OSM
+        const darkMapTile = 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png';
+        const lightMapTile = 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png';
+
+        let mymap;
+        let currentTileLayer;
+        const marketMarkers = {};
+        
+        // --- ฟังก์ชัน Time Calculation ทั้งหมด ---
+        function isDST(date) { 
+            const year = date.getFullYear();
+            const getSunday = (month, n) => {
+                let d = new Date(year, month, 1);
+                let count = 0;
+                while (count < n) {
+                    if (d.getDay() === 0) count++;
+                    if (count === n) return d;
+                    d.setDate(d.getDate() + 1);
+                }
+            };
+            // Logic for US/Canada/Europe DST (approximate)
+            const secondSundayMarch = getSunday(2, 2); 
+            const firstSundayNovember = getSunday(10, 1); 
+            return (date >= secondSundayMarch && date < firstSundayNovember);
+        }
+
+        function getTimeObject(timeStr, baseDate) { 
+            const [hours, minutes] = timeStr.split(':').map(Number);
+            let marketTime = new Date(baseDate); 
+            marketTime.setHours(hours, minutes, 0, 0);
+            
+            // Handle cross-day opening/closing times (e.g., NYSE opening next day T.H. time)
+            if (hours < 7 && baseDate.getHours() >= 12) { 
+                marketTime.setDate(marketTime.getDate() + 1); 
+            }
+            if (hours >= 19 && baseDate.getHours() < 7) {
+                 if (marketTime < baseDate) {
+                     marketTime = new Date(baseDate);
+                     marketTime.setHours(hours, minutes, 0, 0);
+                 }
+            }
+            return marketTime;
+        }
+
+        function formatTimeDiff(diffMs) { 
+            if (diffMs < 0) return '00:00:00';
+            const totalSeconds = Math.floor(diffMs / 1000);
+            const hours = Math.floor(totalSeconds / 3600);
+            const minutes = Math.floor((totalSeconds % 3600) / 60);
+            const seconds = totalSeconds % 60;
+            return `${String(hours).padStart(2, '0')} ชม. ${String(minutes).padStart(2, '0')} น. ${String(seconds).padStart(2, '0')} ว.`;
+        }
+
+        function getMarketStatus(market, now) { 
+            let openTimeStr, closeTimeStr, breakStartStr, breakEndStr;
+            let currentDST = market.dst ? isDST(now) : false;
+            let dstStatus = market.dst ? (currentDST ? 'ฤดูร้อน (DST)' : 'ฤดูหนาว') : '';
+            
+            if (market.dst) {
+                openTimeStr = currentDST ? market.openSummer : market.openWinter;
+                closeTimeStr = currentDST ? market.closeSummer : market.closeWinter;
+            } else {
+                openTimeStr = market.open;
+                closeTimeStr = market.close;
+            }
+            
+            breakStartStr = market.breakStart;
+            breakEndStr = market.breakEnd;
+            
+            let openTime = getTimeObject(openTimeStr, now);
+            let closeTime = getTimeObject(closeTimeStr, now);
+            let breakStartTime, breakEndTime;
+            
+            if (breakStartStr && breakEndStr) {
+                 breakStartTime = getTimeObject(breakStartStr, now);
+                 breakEndTime = getTimeObject(breakEndStr, now);
+            }
+            
+            let status, countdownText, statusClass;
+            let diffMs;
+            let tradingHours = `${openTimeStr} – ${closeTimeStr} น.`;
+            if (breakStartStr) tradingHours += ` (พัก ${breakStartStr} – ${breakEndStr} น.)`;
+            
+            // Adjust to the next opening/closing time if needed (handles markets spanning midnight TH time)
+            if (now > closeTime && openTime < closeTime) { 
+                openTime = getTimeObject(openTimeStr, new Date(now.getTime() + 86400000)); 
+                closeTime = getTimeObject(closeTimeStr, new Date(now.getTime() + 86400000)); 
+                if (breakStartTime) {
+                    breakStartTime = getTimeObject(breakStartStr, new Date(now.getTime() + 86400000)); 
+                    breakEndTime = getTimeObject(breakEndStr, new Date(now.getTime() + 86400000));
+                }
+            }
+            
+            const isDuringBreak = breakStartTime && breakEndTime && now >= breakStartTime && now < breakEndTime;
+            const isOpen = now >= openTime && now < closeTime && !isDuringBreak;
+            
+            if (isOpen) {
+                diffMs = closeTime - now;
+                status = '✅ เปิดทำการ';
+                statusClass = 'open';
+                countdownText = `เหลือเวลาปิด: ${formatTimeDiff(diffMs)}`;
+            } else if (isDuringBreak) {
+                diffMs = breakEndTime - now;
+                status = '⏸️ พักกลางวัน';
+                statusClass = 'near';
+                countdownText = `จะเปิดอีกครั้งใน: ${formatTimeDiff(diffMs)}`;
+            } else {
+                let nextOpenTime = openTime;
+                if (nextOpenTime < now) { nextOpenTime = getTimeObject(openTimeStr, new Date(now.getTime() + 86400000)); }
+                diffMs = nextOpenTime - now;
+                status = '❌ ปิดทำการ';
+                statusClass = 'closed';
+                countdownText = `จะเปิดในอีก: ${formatTimeDiff(diffMs)}`;
+            }
+            
+            const fifteenMinutes = 15 * 60 * 1000;
+            if (isOpen && diffMs <= fifteenMinutes) {
+                status = '⚠️ ใกล้ปิดแล้ว';
+                statusClass = 'near';
+            } else if (!isOpen && diffMs <= fifteenMinutes && diffMs > 0) {
+                status = '🔔 ใกล้เปิดแล้ว';
+                statusClass = 'near';
+            }
+            return { status, countdownText, statusClass, tradingHours, dstStatus };
+        }
+        
+        // --- Leaflet Map Setup and Update ---
+        function initMap() {
+             mymap = L.map('mapid', {
+                zoomControl: false 
+             }).setView([20, 0], 2); 
+
+             currentTileLayer = L.tileLayer(darkMapTile, {
+                attribution: '©OpenStreetMap, ©CartoDB',
+                maxZoom: 10, 
+                minZoom: 2 
+             }).addTo(mymap);
+             
+             updateDashboardMap();
+             setInterval(updateDashboardMap, 1000); 
+        }
+
+        function setMapTileLayer(isDarkMode) {
+            if (currentTileLayer) { mymap.removeLayer(currentTileLayer); }
+            const tileUrl = isDarkMode ? darkMapTile : lightMapTile;
+            const attribution = isDarkMode ? '©OpenStreetMap, ©CartoDB' : '©OpenStreetMap contributors';
+            currentTileLayer = L.tileLayer(tileUrl, {
+                attribution: attribution,
+                maxZoom: 10,
+                minZoom: 2
+            }).addTo(mymap);
+        }
+
+        function updateDashboardMap() {
+            if (!mymap) return;
+
+            const now = new Date();
+            const timeOptions = { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false };
+            const timeElement = document.getElementById('current-time');
+            if (timeElement) {
+                timeElement.textContent = now.toLocaleTimeString('th-TH', timeOptions);
+            }
+            
+            markets.forEach(market => {
+                const statusData = getMarketStatus(market, now);
+
+                const marketIcon = L.divIcon({
+                    className: `market-icon ${statusData.statusClass}`,
+                    html: '', 
+                    iconSize: [20, 20], 
+                    iconAnchor: [10, 10] 
+                });
+
+                if (!marketMarkers[market.id]) {
+                    marketMarkers[market.id] = L.marker([market.lat, market.lon], { icon: marketIcon }).addTo(mymap);
+                    
+                    // 💡 ใช้ bindTooltip เพื่อให้แสดงเมื่อเอาเมาส์ชี้
+                    marketMarkers[market.id].bindTooltip("", {
+                        permanent: false, // จะแสดงเฉพาะเมื่อโฮเวอร์
+                        direction: 'top',
+                        offset: L.point(0, -10)
+                    });
+
+                } else {
+                    marketMarkers[market.id].setIcon(marketIcon); 
+                    marketMarkers[market.id].setOpacity(1.0);
+                }
+                
+                const tooltipContent = `
+                    <b>${market.name}</b> (${market.exchange})<br>
+                    สถานะ: <span style="font-weight: bold; color: ${statusData.statusClass === 'open' ? '#28a745' : (statusData.statusClass === 'closed' ? '#dc3545' : '#ffc107')}">${statusData.status}</span><br>
+                    ${statusData.countdownText}<br>
+                    เวลาทำการ (🇹🇭): ${statusData.tradingHours}
+                    ${statusData.dstStatus ? `<br><span style="font-style: italic; opacity: 0.8;">[${statusData.dstStatus}]</span>` : ''}
+                `;
+                
+                // 💡 อัปเดตเนื้อหา Tooltip
+                marketMarkers[market.id].getTooltip().setContent(tooltipContent);
+            });
+        }
+        
+        document.addEventListener('DOMContentLoaded', () => {
+             initMap();
+             
+             const darkModeToggle = document.getElementById('darkModeToggle');
+             darkModeToggle.addEventListener('change', () => {
+                 const isChecked = darkModeToggle.checked;
+                 document.body.classList.toggle('dark-mode', isChecked);
+                 setMapTileLayer(isChecked); 
+                 if (mymap) {
+                     setTimeout(() => mymap.invalidateSize(), 10); 
+                 }
+             });
+        });
+    </script>
+</body>
+</html>

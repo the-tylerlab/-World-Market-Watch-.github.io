@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>World Market Watch - แผนที่ตลาดหุ้นโลก (เวลาไทย)</title>
+    <title>World Market Watch - แผนที่ตลาดหุ้นโลก</title>
 
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
         
@@ -13,9 +13,9 @@
             --bg-color: #f4f7f9; 
             --card-bg: #ffffff;
             --text-color: #333333;
-            --open-color: #28a745; 
-            --closed-color: #dc3545; 
-            --near-color: #ffc107; 
+            --open-color: #28a745; /* สีเขียวสำหรับเปิดทำการ */
+            --closed-color: #dc3545; /* สีแดงสำหรับปิดทำการ */
+            --near-color: #ffc107; /* สีเหลืองสำหรับใกล้ */
             --border-color: #e0e0e0;
             --header-height-px: 60px; 
         }
@@ -26,7 +26,7 @@
             --border-color: #444444;
         }
         
-        /* 🛠️ CSS การกำหนดความสูงที่ถูกต้อง */
+        /* 🛠️ CSS การกำหนดความสูงและพื้นหลัง */
         html, body {
             height: 100vh;
             margin: 0;
@@ -45,12 +45,17 @@
             background-color: var(--card-bg);
             padding: 15px 30px;
             border-bottom: 1px solid var(--border-color);
+            z-index: 1000; /* ให้อยู่เหนือแผนที่ */
         }
+        
+        /* 💡 โค้ดสำคัญสำหรับ Map Container */
         #mapid {
             height: calc(100vh - var(--header-height-px)); 
             width: 100%;
+            /* 💡 ไม่มีการตั้งค่า background-image ใดๆ เพื่อให้ Tile Layer ทำงาน */
+            background-color: var(--bg-color); /* สีพื้นหลังก่อน Tile โหลด */
         }
-
+        
         /* 💡 Marker Styles */
         .market-icon {
             background-color: #ffffff; 
@@ -62,11 +67,29 @@
             transition: all 0.2s ease-in-out;
             box-shadow: 0 0 5px rgba(0, 0, 0, 0.5);
         }
-        .market-icon.open { background-color: var(--open-color); border-color: #1a7e33; width: 16px; height: 16px; opacity: 1; animation: pulse-open 2s infinite; }
-        .market-icon.closed { background-color: var(--closed-color); border-color: #a7283c; }
+        
+        /* ปรับสี Marker ให้เข้ากับสถานะ */
+        .market-icon.open { 
+            background-color: var(--open-color); 
+            border-color: #1a7e33; 
+            width: 16px; 
+            height: 16px; 
+            opacity: 1; 
+            animation: pulse-open 2s infinite; 
+        }
+        .market-icon.closed { 
+            background-color: var(--closed-color); /* สีแดง */
+            border-color: #b02a37; 
+            opacity: 0.8;
+            width: 12px;
+            height: 12px;
+        }
+        
         .market-icon.near { background-color: var(--near-color); border-color: #cc9900; }
+        
         @keyframes pulse-open { 0% { box-shadow: 0 0 0 0 rgba(40, 167, 69, 0.4); } 70% { box-shadow: 0 0 0 10px rgba(40, 167, 69, 0); } 100% { box-shadow: 0 0 0 0 rgba(40, 167, 69, 0); } }
-        /* 🎨 Toggle Switch Styles */
+        
+        /* 🎨 Toggle Switch Styles และ Tooltip Styles (คงเดิม) */
         .toggle-switch { position: relative; display: inline-block; width: 50px; height: 24px; }
         .toggle-switch input { opacity: 0; width: 0; height: 0; }
         .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #ccc; transition: .4s; border-radius: 24px; }
@@ -74,7 +97,13 @@
         input:checked + .slider { background-color: var(--open-color); }
         input:checked + .slider:before { transform: translateX(26px); }
 
-        /* Fix Tooltip/Popup colors in dark mode */
+        .leaflet-tooltip {
+            border-color: var(--border-color);
+        }
+        .leaflet-tooltip-bottom:before {
+             border-top-color: var(--card-bg);
+        }
+        /* ปรับสี Tooltip สำหรับ Dark Mode */
         .dark-mode .leaflet-tooltip,
         .dark-mode .leaflet-popup-content-wrapper,
         .dark-mode .leaflet-popup-tip {
@@ -84,9 +113,7 @@
 
     </style>
 </head>
-<body class="dark-mode">
-
-    <div class="header">
+<body class="dark-mode"> <div class="header">
         <h1>🌎 World Market Watch</h1>
         <div style="display: flex; align-items: center; gap: 20px;">
             <span style="font-size: 0.9em; opacity: 0.8;">☀️ โหมดสว่าง / 🌙 โหมดมืด:</span>
@@ -105,7 +132,7 @@
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
         
     <script>
-        // Data for major stock exchanges (Time is in GMT+7)
+        // Data for major stock exchanges (Time is in GMT+7) - คงเดิม
         const markets = [
             { id: 'TSE', name: 'Tokyo', exchange: 'TSE (Nikkei 225)', lat: 35.6895, lon: 139.6917, open: '07:00', close: '13:00', breakStart: '09:30', breakEnd: '10:30', dst: false },
             { id: 'HKEX', name: 'Hong Kong', exchange: 'HKEX (Hang Seng)', lat: 22.3193, lon: 114.1694, open: '08:30', close: '15:00', breakStart: '11:00', breakEnd: '12:00', dst: false },
@@ -119,15 +146,15 @@
             { id: 'TADAWUL', name: 'Riyadh (SA)', exchange: 'Tadawul', lat: 24.7136, lon: 46.6069, open: '14:00', close: '21:00', breakStart: '', breakEnd: '', dst: false },
         ];
 
-        // Tile Layer: ใช้ CartoDB และ OSM
-        const darkMapTile = 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png';
-        const lightMapTile = 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png';
+        // 💡 กำหนด Tile Layer URLs ที่เสถียร (CartoDB Positron/Dark Matter)
+        const lightMapTile = 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png'; 
+        const darkMapTile = 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png'; 
 
         let mymap;
-        let currentTileLayer;
+        let currentTileLayer; // ตัวแปรนี้จะใช้เก็บ Tile Layer ปัจจุบัน
         const marketMarkers = {};
         
-        // --- ฟังก์ชัน Time Calculation ทั้งหมด ---
+        // --- ฟังก์ชัน Time Calculation ทั้งหมด (คงเดิม) ---
         function isDST(date) { 
             const year = date.getFullYear();
             const getSunday = (month, n) => {
@@ -139,7 +166,6 @@
                     d.setDate(d.getDate() + 1);
                 }
             };
-            // Logic for US/Canada/Europe DST (approximate)
             const secondSundayMarch = getSunday(2, 2); 
             const firstSundayNovember = getSunday(10, 1); 
             return (date >= secondSundayMarch && date < firstSundayNovember);
@@ -149,11 +175,7 @@
             const [hours, minutes] = timeStr.split(':').map(Number);
             let marketTime = new Date(baseDate); 
             marketTime.setHours(hours, minutes, 0, 0);
-            
-            // Handle cross-day opening/closing times (e.g., NYSE opening next day T.H. time)
-            if (hours < 7 && baseDate.getHours() >= 12) { 
-                marketTime.setDate(marketTime.getDate() + 1); 
-            }
+            if (hours < 7 && baseDate.getHours() >= 12) { marketTime.setDate(marketTime.getDate() + 1); }
             if (hours >= 19 && baseDate.getHours() < 7) {
                  if (marketTime < baseDate) {
                      marketTime = new Date(baseDate);
@@ -176,7 +198,6 @@
             let openTimeStr, closeTimeStr, breakStartStr, breakEndStr;
             let currentDST = market.dst ? isDST(now) : false;
             let dstStatus = market.dst ? (currentDST ? 'ฤดูร้อน (DST)' : 'ฤดูหนาว') : '';
-            
             if (market.dst) {
                 openTimeStr = currentDST ? market.openSummer : market.openWinter;
                 closeTimeStr = currentDST ? market.closeSummer : market.closeWinter;
@@ -184,25 +205,19 @@
                 openTimeStr = market.open;
                 closeTimeStr = market.close;
             }
-            
             breakStartStr = market.breakStart;
             breakEndStr = market.breakEnd;
-            
             let openTime = getTimeObject(openTimeStr, now);
             let closeTime = getTimeObject(closeTimeStr, now);
             let breakStartTime, breakEndTime;
-            
             if (breakStartStr && breakEndStr) {
                  breakStartTime = getTimeObject(breakStartStr, now);
                  breakEndTime = getTimeObject(breakEndStr, now);
             }
-            
             let status, countdownText, statusClass;
             let diffMs;
             let tradingHours = `${openTimeStr} – ${closeTimeStr} น.`;
             if (breakStartStr) tradingHours += ` (พัก ${breakStartStr} – ${breakEndStr} น.)`;
-            
-            // Adjust to the next opening/closing time if needed (handles markets spanning midnight TH time)
             if (now > closeTime && openTime < closeTime) { 
                 openTime = getTimeObject(openTimeStr, new Date(now.getTime() + 86400000)); 
                 closeTime = getTimeObject(closeTimeStr, new Date(now.getTime() + 86400000)); 
@@ -211,10 +226,8 @@
                     breakEndTime = getTimeObject(breakEndStr, new Date(now.getTime() + 86400000));
                 }
             }
-            
             const isDuringBreak = breakStartTime && breakEndTime && now >= breakStartTime && now < breakEndTime;
             const isOpen = now >= openTime && now < closeTime && !isDuringBreak;
-            
             if (isOpen) {
                 diffMs = closeTime - now;
                 status = '✅ เปิดทำการ';
@@ -233,7 +246,6 @@
                 statusClass = 'closed';
                 countdownText = `จะเปิดในอีก: ${formatTimeDiff(diffMs)}`;
             }
-            
             const fifteenMinutes = 15 * 60 * 1000;
             if (isOpen && diffMs <= fifteenMinutes) {
                 status = '⚠️ ใกล้ปิดแล้ว';
@@ -248,28 +260,36 @@
         // --- Leaflet Map Setup and Update ---
         function initMap() {
              mymap = L.map('mapid', {
-                zoomControl: false 
-             }).setView([20, 0], 2); 
-
-             currentTileLayer = L.tileLayer(darkMapTile, {
-                attribution: '©OpenStreetMap, ©CartoDB',
+                zoomControl: true, // เปิด Zoom Control
+                maxBounds: [[-85, -180], [85, 180]],
                 maxZoom: 10, 
-                minZoom: 2 
-             }).addTo(mymap);
+                minZoom: 2, 
+                dragging: true, 
+             }).setView([15, 0], 2); 
+
+             // 💡 เรียกใช้ setMapTileLayer เพื่อโหลดพื้นหลังเริ่มต้น (Dark Mode)
+             setMapTileLayer(document.body.classList.contains('dark-mode'));
              
              updateDashboardMap();
              setInterval(updateDashboardMap, 1000); 
         }
 
+        // 💡 ฟังก์ชันนี้ใช้เปลี่ยน Tile Layer ตามโหมดสว่าง/มืด
         function setMapTileLayer(isDarkMode) {
-            if (currentTileLayer) { mymap.removeLayer(currentTileLayer); }
             const tileUrl = isDarkMode ? darkMapTile : lightMapTile;
-            const attribution = isDarkMode ? '©OpenStreetMap, ©CartoDB' : '©OpenStreetMap contributors';
+            
+            // 1. ถ้ามี Tile Layer เดิมอยู่ ให้ลบออก
+            if (currentTileLayer) {
+                mymap.removeLayer(currentTileLayer);
+            }
+            
+            // 2. สร้าง Tile Layer ใหม่และเพิ่มเข้าไป
             currentTileLayer = L.tileLayer(tileUrl, {
-                attribution: attribution,
-                maxZoom: 10,
-                minZoom: 2
+                maxZoom: 18,
+                attribution: 'Map data &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors, Imagery © <a href="https://carto.com/attributions">CARTO</a>'
             }).addTo(mymap);
+            
+            document.body.classList.toggle('dark-mode', isDarkMode);
         }
 
         function updateDashboardMap() {
@@ -295,9 +315,8 @@
                 if (!marketMarkers[market.id]) {
                     marketMarkers[market.id] = L.marker([market.lat, market.lon], { icon: marketIcon }).addTo(mymap);
                     
-                    // 💡 ใช้ bindTooltip เพื่อให้แสดงเมื่อเอาเมาส์ชี้
                     marketMarkers[market.id].bindTooltip("", {
-                        permanent: false, // จะแสดงเฉพาะเมื่อโฮเวอร์
+                        permanent: false, 
                         direction: 'top',
                         offset: L.point(0, -10)
                     });
@@ -307,6 +326,7 @@
                     marketMarkers[market.id].setOpacity(1.0);
                 }
                 
+                // 💡 ปรับสีใน Tooltip: ใช้สีเขียว, สีแดง, สีเหลือง ตามสถานะ
                 const tooltipContent = `
                     <b>${market.name}</b> (${market.exchange})<br>
                     สถานะ: <span style="font-weight: bold; color: ${statusData.statusClass === 'open' ? '#28a745' : (statusData.statusClass === 'closed' ? '#dc3545' : '#ffc107')}">${statusData.status}</span><br>
@@ -315,7 +335,6 @@
                     ${statusData.dstStatus ? `<br><span style="font-style: italic; opacity: 0.8;">[${statusData.dstStatus}]</span>` : ''}
                 `;
                 
-                // 💡 อัปเดตเนื้อหา Tooltip
                 marketMarkers[market.id].getTooltip().setContent(tooltipContent);
             });
         }
@@ -326,7 +345,7 @@
              const darkModeToggle = document.getElementById('darkModeToggle');
              darkModeToggle.addEventListener('change', () => {
                  const isChecked = darkModeToggle.checked;
-                 document.body.classList.toggle('dark-mode', isChecked);
+                 // 💡 เรียก setMapTileLayer เพื่อเปลี่ยนพื้นหลังแผนที่
                  setMapTileLayer(isChecked); 
                  if (mymap) {
                      setTimeout(() => mymap.invalidateSize(), 10); 

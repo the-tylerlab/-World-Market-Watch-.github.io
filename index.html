@@ -2,7 +2,7 @@
 <html lang="th">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"> 
     <title>World Market Watch - แผนที่ตลาดหุ้นโลก</title>
 
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
@@ -13,11 +13,11 @@
             --bg-color: #f4f7f9; 
             --card-bg: #ffffff;
             --text-color: #333333;
-            --open-color: #28a745; /* สีเขียวสำหรับเปิดทำการ */
-            --closed-color: #dc3545; /* สีแดงสำหรับปิดทำการ */
-            --near-color: #ffc107; /* สีเหลืองสำหรับใกล้ */
+            --open-color: #28a745; 
+            --closed-color: #dc3545; 
+            --near-color: #ffc107; 
             --border-color: #e0e0e0;
-            --header-height-px: 60px; 
+            --header-height-px: 60px; /* Desktop/iPad */
         }
         body.dark-mode {
             --bg-color: #1e2124; 
@@ -26,9 +26,9 @@
             --border-color: #444444;
         }
         
-        /* 🛠️ CSS การกำหนดความสูงและพื้นหลัง */
+        /* 🛠️ CSS Layout */
         html, body {
-            height: 100vh;
+            height: 100vh; 
             margin: 0;
             padding: 0;
             font-family: 'Arial', sans-serif;
@@ -45,15 +45,14 @@
             background-color: var(--card-bg);
             padding: 15px 30px;
             border-bottom: 1px solid var(--border-color);
-            z-index: 1000; /* ให้อยู่เหนือแผนที่ */
+            z-index: 1000;
         }
         
-        /* 💡 โค้ดสำคัญสำหรับ Map Container */
+        /* 💡 Map Container */
         #mapid {
             height: calc(100vh - var(--header-height-px)); 
             width: 100%;
-            /* 💡 ไม่มีการตั้งค่า background-image ใดๆ เพื่อให้ Tile Layer ทำงาน */
-            background-color: var(--bg-color); /* สีพื้นหลังก่อน Tile โหลด */
+            background-color: var(--bg-color); 
         }
         
         /* 💡 Marker Styles */
@@ -68,7 +67,6 @@
             box-shadow: 0 0 5px rgba(0, 0, 0, 0.5);
         }
         
-        /* ปรับสี Marker ให้เข้ากับสถานะ */
         .market-icon.open { 
             background-color: var(--open-color); 
             border-color: #1a7e33; 
@@ -78,7 +76,7 @@
             animation: pulse-open 2s infinite; 
         }
         .market-icon.closed { 
-            background-color: var(--closed-color); /* สีแดง */
+            background-color: var(--closed-color); 
             border-color: #b02a37; 
             opacity: 0.8;
             width: 12px;
@@ -89,7 +87,7 @@
         
         @keyframes pulse-open { 0% { box-shadow: 0 0 0 0 rgba(40, 167, 69, 0.4); } 70% { box-shadow: 0 0 0 10px rgba(40, 167, 69, 0); } 100% { box-shadow: 0 0 0 0 rgba(40, 167, 69, 0); } }
         
-        /* 🎨 Toggle Switch Styles และ Tooltip Styles (คงเดิม) */
+        /* 🎨 Toggle Switch/Tooltip Styles */
         .toggle-switch { position: relative; display: inline-block; width: 50px; height: 24px; }
         .toggle-switch input { opacity: 0; width: 0; height: 0; }
         .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #ccc; transition: .4s; border-radius: 24px; }
@@ -97,23 +95,76 @@
         input:checked + .slider { background-color: var(--open-color); }
         input:checked + .slider:before { transform: translateX(26px); }
 
-        .leaflet-tooltip {
-            border-color: var(--border-color);
-        }
-        .leaflet-tooltip-bottom:before {
-             border-top-color: var(--card-bg);
-        }
-        /* ปรับสี Tooltip สำหรับ Dark Mode */
-        .dark-mode .leaflet-tooltip,
-        .dark-mode .leaflet-popup-content-wrapper,
-        .dark-mode .leaflet-popup-tip {
+        .leaflet-tooltip { border-color: var(--border-color); }
+        .leaflet-tooltip-bottom:before { border-top-color: var(--card-bg); }
+        .dark-mode .leaflet-tooltip, .dark-mode .leaflet-popup-content-wrapper, .dark-mode .leaflet-popup-tip {
             background: var(--card-bg);
             color: var(--text-color);
         }
 
+        /* 💡 Media Query สำหรับการปรับ Header ในหน้าจอขนาดเล็ก (Mobile/iPad) */
+        @media (max-width: 768px) {
+            
+            /* 1. ปรับความสูง Header ใหม่ใน Mobile Mode */
+            :root {
+                --header-height-px: 95px; 
+            }
+            
+            .header {
+                flex-direction: column; 
+                align-items: flex-start; 
+                height: auto; 
+                padding: 10px 15px; 
+                gap: 5px; 
+            }
+            
+            .header h1 {
+                font-size: 1.1em; /* ปรับขนาดชื่อหัวข้อหลัก */
+                margin-bottom: 8px; 
+            }
+
+            .header > div {
+                width: 100%; 
+                display: flex;
+                justify-content: space-between; 
+                align-items: center;
+                flex-wrap: wrap; 
+            }
+            
+            /* จัดกลุ่ม Toggle/Text ให้อยู่ในกลุ่มเดียวกันด้านซ้าย */
+            .header > div:nth-child(2) { 
+                order: 2; 
+                justify-content: flex-start; 
+                gap: 10px; 
+            }
+            
+            .header > div span {
+                font-size: 0.8em; /* ปรับขนาดข้อความ โหมดสว่าง/มืด */
+            }
+
+            .header .time-display {
+                font-size: 0.9em; /* ปรับขนาดข้อความ เวลาปัจจุบัน */
+                order: 3; 
+            }
+            
+            #mapid {
+                height: calc(100vh - var(--header-height-px)); 
+            }
+            
+            body {
+                font-size: 14px;
+            }
+            
+            /* 💡 ปรับปุ่มซูมใน Mobile */
+            .leaflet-top.leaflet-right { 
+                 top: var(--header-height-px); 
+            }
+        }
     </style>
 </head>
-<body class="dark-mode"> <div class="header">
+<body class="dark-mode"> 
+
+    <div class="header">
         <h1>🌎 World Market Watch</h1>
         <div style="display: flex; align-items: center; gap: 20px;">
             <span style="font-size: 0.9em; opacity: 0.8;">☀️ โหมดสว่าง / 🌙 โหมดมืด:</span>
@@ -132,7 +183,7 @@
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
         
     <script>
-        // Data for major stock exchanges (Time is in GMT+7) - คงเดิม
+        // Data for major stock exchanges (Time is in GMT+7)
         const markets = [
             { id: 'TSE', name: 'Tokyo', exchange: 'TSE (Nikkei 225)', lat: 35.6895, lon: 139.6917, open: '07:00', close: '13:00', breakStart: '09:30', breakEnd: '10:30', dst: false },
             { id: 'HKEX', name: 'Hong Kong', exchange: 'HKEX (Hang Seng)', lat: 22.3193, lon: 114.1694, open: '08:30', close: '15:00', breakStart: '11:00', breakEnd: '12:00', dst: false },
@@ -146,12 +197,12 @@
             { id: 'TADAWUL', name: 'Riyadh (SA)', exchange: 'Tadawul', lat: 24.7136, lon: 46.6069, open: '14:00', close: '21:00', breakStart: '', breakEnd: '', dst: false },
         ];
 
-        // 💡 กำหนด Tile Layer URLs ที่เสถียร (CartoDB Positron/Dark Matter)
+        // 💡 Tile Layer URLs
         const lightMapTile = 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png'; 
         const darkMapTile = 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png'; 
 
         let mymap;
-        let currentTileLayer; // ตัวแปรนี้จะใช้เก็บ Tile Layer ปัจจุบัน
+        let currentTileLayer;
         const marketMarkers = {};
         
         // --- ฟังก์ชัน Time Calculation ทั้งหมด (คงเดิม) ---
@@ -260,14 +311,21 @@
         // --- Leaflet Map Setup and Update ---
         function initMap() {
              mymap = L.map('mapid', {
-                zoomControl: true, // เปิด Zoom Control
+                // 💡 ตั้งค่าแผนที่เริ่มต้นที่กรุงเทพฯ (ไทย)
+                center: [13.7563, 100.5018], 
+                zoom: 4, // ตั้งค่าซูมเริ่มต้น (4-5 จะดีสำหรับประเทศไทย)
+                
+                zoomControl: true, 
                 maxBounds: [[-85, -180], [85, 180]],
                 maxZoom: 10, 
-                minZoom: 2, 
+                minZoom: 1, 
                 dragging: true, 
-             }).setView([15, 0], 2); 
+             }); 
 
-             // 💡 เรียกใช้ setMapTileLayer เพื่อโหลดพื้นหลังเริ่มต้น (Dark Mode)
+             // ❌ ลบ mymap.fitWorld(); ออก
+             
+             mymap.zoomControl.setPosition('topright'); 
+
              setMapTileLayer(document.body.classList.contains('dark-mode'));
              
              updateDashboardMap();
@@ -278,12 +336,10 @@
         function setMapTileLayer(isDarkMode) {
             const tileUrl = isDarkMode ? darkMapTile : lightMapTile;
             
-            // 1. ถ้ามี Tile Layer เดิมอยู่ ให้ลบออก
             if (currentTileLayer) {
                 mymap.removeLayer(currentTileLayer);
             }
             
-            // 2. สร้าง Tile Layer ใหม่และเพิ่มเข้าไป
             currentTileLayer = L.tileLayer(tileUrl, {
                 maxZoom: 18,
                 attribution: 'Map data &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors, Imagery © <a href="https://carto.com/attributions">CARTO</a>'
@@ -326,7 +382,6 @@
                     marketMarkers[market.id].setOpacity(1.0);
                 }
                 
-                // 💡 ปรับสีใน Tooltip: ใช้สีเขียว, สีแดง, สีเหลือง ตามสถานะ
                 const tooltipContent = `
                     <b>${market.name}</b> (${market.exchange})<br>
                     สถานะ: <span style="font-weight: bold; color: ${statusData.statusClass === 'open' ? '#28a745' : (statusData.statusClass === 'closed' ? '#dc3545' : '#ffc107')}">${statusData.status}</span><br>
@@ -338,6 +393,13 @@
                 marketMarkers[market.id].getTooltip().setContent(tooltipContent);
             });
         }
+
+        // 💡 Event Listener สำหรับการปรับขนาดหน้าจอ (Responsive)
+        window.addEventListener('resize', () => {
+             if (mymap) {
+                 mymap.invalidateSize(true); 
+             }
+        });
         
         document.addEventListener('DOMContentLoaded', () => {
              initMap();
@@ -345,7 +407,6 @@
              const darkModeToggle = document.getElementById('darkModeToggle');
              darkModeToggle.addEventListener('change', () => {
                  const isChecked = darkModeToggle.checked;
-                 // 💡 เรียก setMapTileLayer เพื่อเปลี่ยนพื้นหลังแผนที่
                  setMapTileLayer(isChecked); 
                  if (mymap) {
                      setTimeout(() => mymap.invalidateSize(), 10); 

@@ -3,9 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0"> 
-    <title>World Market Watch - แผนที่ตลาดหุ้นโลก</title>
+    <title>World Market Map - แผนที่ตลาดหุ้นโลก</title>
 
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@400;700&display=swap" rel="stylesheet">
         
     <style>
         /* 💡 การตั้งค่า Dark Mode/Light Mode */
@@ -17,7 +21,7 @@
             --closed-color: #dc3545; 
             --near-color: #ffc107; 
             --border-color: #e0e0e0;
-            --header-height-px: 60px; /* Desktop/iPad */
+            --header-height-px: 65px; 
         }
         body.dark-mode {
             --bg-color: #1e2124; 
@@ -31,7 +35,8 @@
             height: 100vh; 
             margin: 0;
             padding: 0;
-            font-family: 'Arial', sans-serif;
+            font-size: 16px; 
+            font-family: 'Chakra Petch', sans-serif; 
             background-color: var(--bg-color);
             color: var(--text-color);
             transition: background-color 0.3s, color 0.3s;
@@ -40,14 +45,27 @@
             height: var(--header-height-px); 
             box-sizing: border-box;
             display: flex; 
-            justify-content: space-between;
+            /* 💡 จัดเรียงจากซ้ายไปขวาอย่างเท่ากัน */
+            justify-content: space-between; 
             align-items: center;
             background-color: var(--card-bg);
             padding: 15px 30px;
             border-bottom: 1px solid var(--border-color);
             z-index: 1000;
         }
+
+        .header h1 {
+            font-size: 1.5em; 
+            margin: 0; /* ลบ margin เริ่มต้นออก */
+        }
         
+        /* 💡 กลุ่มควบคุมทางขวา (Time + Toggle) */
+        .header-controls {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
         /* 💡 Map Container */
         #mapid {
             height: calc(100vh - var(--header-height-px)); 
@@ -55,7 +73,7 @@
             background-color: var(--bg-color); 
         }
         
-        /* 💡 Marker Styles */
+        /* 💡 Marker Styles (คงเดิม) */
         .market-icon {
             background-color: #ffffff; 
             border-radius: 50%;
@@ -87,7 +105,7 @@
         
         @keyframes pulse-open { 0% { box-shadow: 0 0 0 0 rgba(40, 167, 69, 0.4); } 70% { box-shadow: 0 0 0 10px rgba(40, 167, 69, 0); } 100% { box-shadow: 0 0 0 0 rgba(40, 167, 69, 0); } }
         
-        /* 🎨 Toggle Switch/Tooltip Styles */
+        /* 🎨 Toggle Switch/Tooltip Styles (คงเดิม) */
         .toggle-switch { position: relative; display: inline-block; width: 50px; height: 24px; }
         .toggle-switch input { opacity: 0; width: 0; height: 0; }
         .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #ccc; transition: .4s; border-radius: 24px; }
@@ -95,7 +113,12 @@
         input:checked + .slider { background-color: var(--open-color); }
         input:checked + .slider:before { transform: translateX(26px); }
 
-        .leaflet-tooltip { border-color: var(--border-color); }
+        /* 💡 ปรับขนาด Font ใน Tooltip */
+        .leaflet-tooltip { 
+            border-color: var(--border-color); 
+            font-size: 0.95em; 
+        }
+
         .leaflet-tooltip-bottom:before { border-top-color: var(--card-bg); }
         .dark-mode .leaflet-tooltip, .dark-mode .leaflet-popup-content-wrapper, .dark-mode .leaflet-popup-tip {
             background: var(--card-bg);
@@ -107,7 +130,7 @@
             
             /* 1. ปรับความสูง Header ใหม่ใน Mobile Mode */
             :root {
-                --header-height-px: 95px; 
+                --header-height-px: 100px; 
             }
             
             .header {
@@ -117,34 +140,39 @@
                 padding: 10px 15px; 
                 gap: 5px; 
             }
-            
-            .header h1 {
-                font-size: 1.1em; /* ปรับขนาดชื่อหัวข้อหลัก */
-                margin-bottom: 8px; 
-            }
 
-            .header > div {
-                width: 100%; 
-                display: flex;
-                justify-content: space-between; 
-                align-items: center;
-                flex-wrap: wrap; 
-            }
-            
-            /* จัดกลุ่ม Toggle/Text ให้อยู่ในกลุ่มเดียวกันด้านซ้าย */
-            .header > div:nth-child(2) { 
-                order: 2; 
-                justify-content: flex-start; 
+            /* จัดกลุ่ม Time Display และ Toggle Switch แยกกันใน Mobile */
+            .header-controls {
+                width: 100%;
+                justify-content: space-between;
                 gap: 10px; 
             }
             
-            .header > div span {
-                font-size: 0.8em; /* ปรับขนาดข้อความ โหมดสว่าง/มืด */
+            .header h1 {
+                width: 100%; /* ชื่อหัวข้อเต็มบรรทัด */
+                font-size: 1.25em; 
+                margin-bottom: 8px; 
+            }
+            
+            .header-controls > div {
+                /* สำหรับ Time Display */
+                order: 2;
+            }
+
+            .header-controls > div:nth-child(1) {
+                /* สำหรับ Dark Mode Toggle */
+                order: 1;
+                display: flex;
+                align-items: center;
+                gap: 10px;
+            }
+            
+            .header-controls span {
+                font-size: 0.9em; 
             }
 
             .header .time-display {
-                font-size: 0.9em; /* ปรับขนาดข้อความ เวลาปัจจุบัน */
-                order: 3; 
+                font-size: 1.0em; 
             }
             
             #mapid {
@@ -152,10 +180,9 @@
             }
             
             body {
-                font-size: 14px;
+                font-size: 16px; 
             }
             
-            /* 💡 ปรับปุ่มซูมใน Mobile */
             .leaflet-top.leaflet-right { 
                  top: var(--header-height-px); 
             }
@@ -165,16 +192,20 @@
 <body class="dark-mode"> 
 
     <div class="header">
-        <h1>🌎 World Market Watch</h1>
-        <div style="display: flex; align-items: center; gap: 20px;">
-            <span style="font-size: 0.9em; opacity: 0.8;">☀️ โหมดสว่าง / 🌙 โหมดมืด:</span>
-            <label class="toggle-switch">
-                <input type="checkbox" id="darkModeToggle" checked> 
-                <span class="slider"></span>
-            </label>
-        </div>
-        <div class="time-display">
-            🇹🇭 เวลาปัจจุบัน: <span id="current-time"></span>
+        <h1>🌎 World Market Map</h1> 
+        
+        <div class="header-controls">
+            <div class="time-display">
+                🇹🇭 เวลาปัจจุบัน: <span id="current-time"></span>
+            </div>
+
+            <div style="display: flex; align-items: center; gap: 10px;">
+                <span style="font-size: 0.9em; opacity: 0.8;">☀️ โหมดสว่าง / 🌙 โหมดมืด:</span>
+                <label class="toggle-switch">
+                    <input type="checkbox" id="darkModeToggle" checked> 
+                    <span class="slider"></span>
+                </label>
+            </div>
         </div>
     </div>
     
@@ -185,16 +216,27 @@
     <script>
         // Data for major stock exchanges (Time is in GMT+7)
         const markets = [
-            { id: 'TSE', name: 'Tokyo', exchange: 'TSE (Nikkei 225)', lat: 35.6895, lon: 139.6917, open: '07:00', close: '13:00', breakStart: '09:30', breakEnd: '10:30', dst: false },
-            { id: 'HKEX', name: 'Hong Kong', exchange: 'HKEX (Hang Seng)', lat: 22.3193, lon: 114.1694, open: '08:30', close: '15:00', breakStart: '11:00', breakEnd: '12:00', dst: false },
-            { id: 'SSE', name: 'Shanghai', exchange: 'SSE (Shanghai)', lat: 31.2304, lon: 121.4737, open: '08:30', close: '14:00', breakStart: '10:30', breakEnd: '12:00', dst: false },
+            // === เอเชีย/แปซิฟิก ===
             { id: 'SET', name: 'Bangkok (ไทย)', exchange: 'SET', lat: 13.7563, lon: 100.5018, open: '10:00', close: '16:30', breakStart: '12:30', breakEnd: '14:00', dst: false },
+            { id: 'TSE', name: 'Tokyo (JP)', exchange: 'TSE (Nikkei 225)', lat: 35.6895, lon: 139.6917, open: '07:00', close: '13:00', breakStart: '09:30', breakEnd: '10:30', dst: false },
+            { id: 'KSE', name: 'Seoul (KR)', exchange: 'KSE (KOSPI)', lat: 37.5665, lon: 126.9780, open: '07:00', close: '13:30', breakStart: '', breakEnd: '', dst: false },
+            { id: 'HKEX', name: 'Hong Kong (HK)', exchange: 'HKEX (Hang Seng)', lat: 22.3193, lon: 114.1694, open: '08:30', close: '15:00', breakStart: '11:00', breakEnd: '12:00', dst: false },
+            { id: 'SSE', name: 'Shanghai (CN)', exchange: 'SSE (Shanghai)', lat: 31.2304, lon: 121.4737, open: '08:30', close: '14:00', breakStart: '10:30', breakEnd: '12:00', dst: false },
+            { id: 'ASX', name: 'Sydney (AU)', exchange: 'ASX', lat: -33.8688, lon: 151.2093, open: '07:00', close: '13:00', breakStart: '', breakEnd: '', dst: false }, 
+            { id: 'BSE', name: 'Mumbai (IN)', exchange: 'BSE (Sensex)', lat: 18.9750, lon: 72.8258, open: '10:30', close: '17:00', breakStart: '', breakEnd: '', dst: false },
+            
+            // === ยุโรป/ตะวันออกกลาง/แอฟริกา ===
             { id: 'LSE', name: 'London (UK)', exchange: 'LSE (FTSE 100)', lat: 51.5074, lon: 0.1278, openSummer: '14:00', closeSummer: '22:30', openWinter: '15:00', closeWinter: '23:30', dst: true },
             { id: 'XETRA', name: 'Frankfurt (DE)', exchange: 'XETRA (DAX)', lat: 50.1109, lon: 8.6821, openSummer: '14:00', closeSummer: '22:30', openWinter: '15:00', closeWinter: '23:30', dst: true },
-            { id: 'NYSE', name: 'New York (US)', exchange: 'NYSE / NASDAQ', lat: 40.7128, lon: -74.0060, openSummer: '20:30', closeSummer: '03:00', openWinter: '21:30', closeWinter: '04:00', dst: true },
-            { id: 'ASX', name: 'Sydney (AU)', exchange: 'ASX', lat: -33.8688, lon: 151.2093, open: '07:00', close: '13:00', breakStart: '', breakEnd: '', dst: false }, 
-            { id: 'TSX', name: 'Toronto (CA)', exchange: 'TSX', lat: 43.6532, lon: -79.3832, openSummer: '20:30', closeSummer: '03:00', openWinter: '21:30', closeWinter: '04:00', dst: true },
+            { id: 'SAX', name: 'Stockholm (SE)', exchange: 'SAX (OMX)', lat: 59.3293, lon: 18.0686, openSummer: '14:00', closeSummer: '22:30', openWinter: '15:00', closeWinter: '23:30', dst: true },
+            { id: 'TASE', name: 'Tel Aviv (IL)', exchange: 'TASE (TA-35)', lat: 32.0853, lon: 34.7818, open: '13:30', close: '23:30', breakStart: '', breakEnd: '', dst: false }, 
             { id: 'TADAWUL', name: 'Riyadh (SA)', exchange: 'Tadawul', lat: 24.7136, lon: 46.6069, open: '14:00', close: '21:00', breakStart: '', breakEnd: '', dst: false },
+            
+            // === อเมริกาเหนือ/ใต้ ===
+            { id: 'NYSE', name: 'New York (US)', exchange: 'NYSE / NASDAQ', lat: 40.7128, lon: -74.0060, openSummer: '20:30', closeSummer: '03:00', openWinter: '21:30', closeWinter: '04:00', dst: true },
+            { id: 'TSX', name: 'Toronto (CA)', exchange: 'TSX', lat: 43.6532, lon: -79.3832, openSummer: '20:30', closeSummer: '03:00', openWinter: '21:30', closeWinter: '04:00', dst: true },
+            { id: 'BMV', name: 'Mexico City (MX)', exchange: 'BMV', lat: 19.4326, lon: -99.1332, openSummer: '20:30', closeSummer: '03:00', openWinter: '21:30', closeWinter: '04:00', dst: true }, 
+            { id: 'B3', name: 'São Paulo (BR)', exchange: 'B3 (Ibovespa)', lat: -23.5505, lon: -46.6333, openSummer: '20:00', closeSummer: '03:00', openWinter: '21:00', closeWinter: '04:00', dst: true }, 
         ];
 
         // 💡 Tile Layer URLs
@@ -308,12 +350,55 @@
             return { status, countdownText, statusClass, tradingHours, dstStatus };
         }
         
+        // --- 💡 ฟังก์ชัน: กำหนดจุดเริ่มต้นของแผนที่โดยอิงจากตลาดที่เปิดอยู่ ---
+        function determineInitialView() {
+            const now = new Date();
+            // ค่าเริ่มต้นเมื่อไม่มีตลาดใดเปิด (กึ่งกลางเอเชียตะวันออกเฉียงใต้)
+            let targetLat = 13.7563; 
+            let targetLon = 100.5018;
+            let targetZoom = 1.5; 
+            let marketToCenter = null;
+            
+            // 1. ตรวจสอบประเทศไทย (SET) ก่อน
+            const thailandMarket = markets.find(m => m.id === 'SET');
+            if (thailandMarket) {
+                const statusData = getMarketStatus(thailandMarket, now);
+                // ถ้าเปิด/ใกล้ (open, near) ให้ตั้งเป็นจุดโฟกัสทันที
+                if (statusData.statusClass === 'open' || statusData.statusClass === 'near') {
+                    marketToCenter = thailandMarket;
+                }
+            }
+            
+            // 2. หาก SET ปิด ให้หาตลาดอื่นที่เปิดอยู่
+            if (!marketToCenter) {
+                for (const market of markets) {
+                    if (market.id !== 'SET') {
+                        const statusData = getMarketStatus(market, now);
+                        // ถ้าเปิด/ใกล้ (open, near) ให้ตั้งเป็นจุดโฟกัส และหยุดหา
+                        if (statusData.statusClass === 'open' || statusData.statusClass === 'near') {
+                            marketToCenter = market;
+                            break; 
+                        }
+                    }
+                }
+            }
+
+            if (marketToCenter) {
+                targetLat = marketToCenter.lat;
+                targetLon = marketToCenter.lon;
+                targetZoom = 4; // Zoom เข้าไปในระดับประเทศ
+            }
+            
+            return { lat: targetLat, lon: targetLon, zoom: targetZoom }; 
+        }
+
         // --- Leaflet Map Setup and Update ---
         function initMap() {
+             const initialView = determineInitialView();
+
              mymap = L.map('mapid', {
-                // 💡 ตั้งค่าแผนที่เริ่มต้นที่กรุงเทพฯ (ไทย)
-                center: [13.7563, 100.5018], 
-                zoom: 4, // ตั้งค่าซูมเริ่มต้น (4-5 จะดีสำหรับประเทศไทย)
+                center: [initialView.lat, initialView.lon], 
+                zoom: initialView.zoom, 
                 
                 zoomControl: true, 
                 maxBounds: [[-85, -180], [85, 180]],
@@ -322,8 +407,6 @@
                 dragging: true, 
              }); 
 
-             // ❌ ลบ mymap.fitWorld(); ออก
-             
              mymap.zoomControl.setPosition('topright'); 
 
              setMapTileLayer(document.body.classList.contains('dark-mode'));
@@ -383,8 +466,8 @@
                 }
                 
                 const tooltipContent = `
-                    <b>${market.name}</b> (${market.exchange})<br>
-                    สถานะ: <span style="font-weight: bold; color: ${statusData.statusClass === 'open' ? '#28a745' : (statusData.statusClass === 'closed' ? '#dc3545' : '#ffc107')}">${statusData.status}</span><br>
+                    <span style="font-weight: 700;">${market.name}</span> (${market.exchange})<br>
+                    สถานะ: <span style="font-weight: 700; color: ${statusData.statusClass === 'open' ? '#28a745' : (statusData.statusClass === 'closed' ? '#dc3545' : '#ffc107')}">${statusData.status}</span><br>
                     ${statusData.countdownText}<br>
                     เวลาทำการ (🇹🇭): ${statusData.tradingHours}
                     ${statusData.dstStatus ? `<br><span style="font-style: italic; opacity: 0.8;">[${statusData.dstStatus}]</span>` : ''}

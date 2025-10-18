@@ -234,6 +234,11 @@
             box-shadow: none !important;
         }
         
+        /* 💡 NEW FIX: Z-index สำหรับ Tooltip Pane */
+        .leaflet-tooltip-pane {
+             z-index: 1000 !important; /* ต้องสูงกว่า Marker Pane (900) */
+        }
+
         /* 💡 สไตล์สำหรับ Tooltip (แทน Popup) */
         .leaflet-tooltip {
              padding: 0; 
@@ -241,7 +246,8 @@
              opacity: 0.95 !important;
              background-color: transparent !important; 
              border: none !important; 
-             pointer-events: none !important; 
+             /* 🚨 CRITICAL FIX: ต้องให้ Tooltip รับ Pointer Events เมื่อเป็น Sticky */
+             pointer-events: auto !important; 
         }
         
         /* 💡 สไตล์สำหรับเนื้อหา Tooltip */
@@ -616,6 +622,7 @@
              setZoomControlPosition();
 
              updateDashboardMap();
+             // 💡 Call updateDashboardMap every 1 second
              setInterval(updateDashboardMap, 1000); 
 
              mymap.on('click', function(e) {
@@ -630,7 +637,6 @@
                     
                     if (markerToUnstick) {
                         markerToUnstick.closeTooltip();
-                        markerToUnstick.getTooltip().setTooltipOptions({ permanent: false });
                         stickyTooltip = null;
                     }
                 }
@@ -657,7 +663,7 @@
             }
         }
 
-        // 💡 MODIFIED: การจัดการ Marker เพื่อความเสถียรสูงสุด (V5.8)
+        // 💡 MODIFIED: การจัดการ Marker เพื่อความเสถียรสูงสุด (V6.1)
         function updateDashboardMap() {
             if (!mymap) return;
 
@@ -678,7 +684,6 @@
             
             let allMarketsClosed = true;
             
-            // 💡 NEW: ตรวจสอบ Zoom Level (สำหรับ V5.8 Fix)
             const currentZoom = mymap.getZoom(); 
             const isZoomedOut = currentZoom <= 1.5; 
 
@@ -692,13 +697,11 @@
                 const markerId = market.id;
                 const currentStatusClass = statusData.statusClass;
                 
-                // กำหนดสีตามสถานะที่คำนวณได้ (ใช้ CSS Variable String)
                 let statusColorVar = '';
                 if (currentStatusClass === 'open') statusColorVar = 'var(--open-color)'; 
                 else if (currentStatusClass === 'closed') statusColorVar = 'var(--closed-color)'; 
                 else statusColorVar = 'var(--near-color)'; 
                 
-                // สำหรับ Tooltip, เรายังคงใช้ Hex Code เพื่อให้สีคงที่ใน HTML
                 let statusColorHex = '';
                 if (currentStatusClass === 'open') statusColorHex = '#28a745'; 
                 else if (currentStatusClass === 'closed') statusColorHex = '#dc3545'; 
@@ -707,10 +710,8 @@
                 
                 // 1. ตรวจสอบและสร้าง Marker ครั้งแรก
                 if (!marketMarkers[markerId]) {
-                    // 💡 NEW: L.divIcon มี HTML ภายในเป็น Dot
                     const marketIcon = L.divIcon({
                         className: 'market-icon-container', 
-                        // 💡 HTML: ใช้ Inline Style เพื่อกำหนดสีเริ่มต้นด้วย CSS Variable
                         html: `<div class="market-dot" style="background-color: ${statusColorVar};"></div>`, 
                         iconSize: [20, 20], 
                         iconAnchor: [10, 10] 
@@ -722,7 +723,7 @@
                     }).addTo(mymap);
                     marketMarkers[markerId] = marker;
                     
-                    // 2. ผูก Tooltip และ Event Handlers (เหมือนเดิม)
+                    // 2. ผูก Tooltip และ Event Handlers
                     const tooltipContent = `
                         <div class="market-tooltip-content">
                             <span style="font-weight: 700;">${market.name}</span> (${market.exchange})<br>
@@ -740,17 +741,9 @@
                         className: 'market-tooltip',
                     });
                     
-                    setTimeout(() => {
-                        const markerElement = marker.getElement();
-                        if (markerElement) {
-                             L.DomEvent.on(markerElement, 'click', L.DomEvent.stop);
-                             L.DomEvent.on(markerElement, 'touchstart', L.DomEvent.stop);
-                        }
-                    }, 0);
-
                     // Event Handlers
                      marker.on('mouseover', function (e) {
-                            if (!stickyTooltip) {
+                            if (this.getTooltip() !== stickyTooltip) {
                                 this.openTooltip();
                             }
                         });
@@ -762,21 +755,16 @@
                         });
 
                         marker.on('click', function (e) {
-                             if (e.originalEvent) {
-                                L.DomEvent.stopPropagation(e.originalEvent);
-                                L.DomEvent.preventDefault(e.originalEvent);
-                             }
-                             
-                             L.DomEvent.stopPropagation(e);
-                             L.DomEvent.preventDefault(e); 
+                             L.DomEvent.stop(e); 
                              
                              const currentTooltip = this.getTooltip();
                              
                              if (stickyTooltip === currentTooltip) {
+                                  // 💡 FIX V6.1: UN-STICKY
                                   this.closeTooltip();
-                                  currentTooltip.setTooltipOptions({ permanent: false }); 
                                   stickyTooltip = null;
                              } else {
+                                  // 💡 FIX V6.1: MAKE STICKY
                                   if (stickyTooltip) {
                                       let prevMarker = null;
                                       for (const id in marketMarkers) {
@@ -787,14 +775,17 @@
                                       }
                                       if (prevMarker) {
                                            prevMarker.closeTooltip();
-                                           stickyTooltip.setTooltipOptions({ permanent: false });
                                       }
                                   }
                                   
-                                  currentTooltip.setTooltipOptions({ permanent: true });
-                                  this.openTooltip();
+                                  // 🚨 CRITICAL FIX V6.1: ลบ this.openTooltip() ออกตรงนี้!
+                                  // การเปิดจะถูกจัดการโดย updateDashboardMap ในวินาทีถัดไป เพื่อป้องกันการกระพริบ
                                   stickyTooltip = currentTooltip;
                              }
+                             
+                             // 💡 IMPORTANT: เรียก updateDashboardMap ทันทีหลังคลิก เพื่อให้ Tooltip เปิดโดยไม่กระพริบ
+                             // เพราะตอนนี้ stickyTooltip ถูกกำหนดค่าใหม่แล้ว
+                             updateDashboardMap(); 
                         });
 
 
@@ -806,12 +797,10 @@
                     if (markerElement) {
                         const dotElement = markerElement.querySelector('.market-dot');
                         
-                        // 💡 CRITICAL FIX V5.8: ข้ามการอัปเดตสีสำหรับ BMV เมื่อ Zoom ออกสุด
                         if (dotElement) {
                             if (market.id === 'BMV' && isZoomedOut) {
-                                // ไม่ต้องอัปเดตสีของ Mexico (BMV) เมื่อ Zoom น้อยกว่าหรือเท่ากับ 1.5
+                                // Skip update
                             } else {
-                                // อัปเดต Marker อื่นๆ และ BMV เมื่อไม่ได้ Zoom ออกสุด
                                 dotElement.style.backgroundColor = statusColorVar;
                             }
                         }
@@ -829,8 +818,9 @@
                     const tooltip = marker.getTooltip();
                     if (tooltip) {
                         tooltip.setContent(tooltipContent);
+                        // 💡 CRITICAL FIX V6.1: สั่งให้ stickyTooltip เปิดค้างไว้ในทุกรอบการอัปเดต
                         if (tooltip === stickyTooltip) {
-                            marker.openTooltip();
+                            marker.openTooltip(); 
                         }
                     }
                 }

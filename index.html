@@ -22,11 +22,13 @@
             --near-color: #ffc107; 
             --border-color: #e0e0e0;
             --header-height-desktop-px: 150px; 
+            --legend-height-desktop-px: 35px; /* ความสูงของแถบคำอธิบาย */
             --font-size-title: 2.2em; 
             --font-size-time: 1.4em; 
             --font-size-toggle: 1.1em; 
             --header-spacing: 10px; 
             --header-padding-x: 40px; 
+            --footer-height-px: 30px; 
         }
         body.dark-mode {
             --bg-color: #1e2124; 
@@ -58,66 +60,79 @@
             background-color: var(--card-bg);
             padding: 15px var(--header-padding-x); 
             border-bottom: 1px solid var(--border-color);
-            z-index: 1000; /* Header ต้องอยู่บนแผนที่ */
+            z-index: 1000; 
             gap: var(--header-spacing);
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); 
             transition: background-color 0.3s, color 0.3s, box-shadow 0.3s;
         }
 
-        /* 💡 NEW: แก้ปัญหา Map Controls ไม่ตอบสนอง: ตั้ง z-index ให้แผนที่รับ click */
+        /* 💡 Legend Bar (แถบคำอธิบายสี) */
+        .legend-bar {
+            width: 100%;
+            height: var(--legend-height-desktop-px);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 30px;
+            background-color: var(--card-bg);
+            border-bottom: 1px solid var(--border-color);
+            z-index: 500; 
+            color: var(--text-color);
+            font-size: 1.0em;
+            padding: 5px 0;
+            box-sizing: border-box;
+        }
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-weight: 500;
+        }
+        .legend-icon {
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            border: 2px solid;
+            box-sizing: border-box;
+        }
+        .legend-icon.open-icon { background-color: var(--open-color); border-color: #1a7e33; }
+        .legend-icon.closed-icon { background-color: var(--closed-color); border-color: #b02a37; }
+        .legend-icon.near-icon { background-color: var(--near-color); border-color: #cc9900; }
+        .dark-mode .legend-icon { border-color: #ccc; } 
+
+
+        /* 💡 Copyright Bar */
+        .footer {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            background-color: var(--card-bg);
+            color: var(--text-color);
+            text-align: center;
+            padding: 5px 0;
+            font-size: 0.8em;
+            border-top: 1px solid var(--border-color);
+            z-index: 1000; 
+            opacity: 0.8;
+            transition: background-color 0.3s, color 0.3s;
+        }
+
+        /* 💡 แก้ไขความสูงของ Map: หัก header, legend, และ footer ออก */
         #mapid {
-            height: calc(100vh - var(--header-height-desktop-px)); 
+            height: calc(100vh - var(--header-height-desktop-px) - var(--legend-height-desktop-px) - var(--footer-height-px)); 
             width: 100%;
             background-color: var(--bg-color); 
-            z-index: 1; /* ทำให้แผนที่เป็น layer หลักและรับ click ได้ */
+            z-index: 1; 
         }
         
-        /* 💡 ปรับตำแหน่งของปุ่มควบคุมแผนที่ด้านบนขวา ไม่ให้ทับ header */
+        /* 💡 ปรับตำแหน่งของปุ่มควบคุมแผนที่ด้านบนขวา ไม่ให้ทับ header/legend */
         .leaflet-top.leaflet-right {
-            top: var(--header-height-desktop-px); 
+            top: calc(var(--header-height-desktop-px) + var(--legend-height-desktop-px)); 
             padding-top: 10px; 
         }
         
-        /* 💡 (ลบ) z-index: 1001 สำหรับ .leaflet-control-container ออก */
-        
-        /* 💡 บรรทัดบนสุด (Title) */
-        .header-top h1 {
-            font-size: var(--font-size-title); 
-            margin: 0; 
-            font-weight: 700; 
-            color: var(--text-color); 
-        }
-        
-        /* 💡 บรรทัดกลาง (Date & Time) */
-        .time-display {
-            font-size: var(--font-size-time);
-            margin: 0; 
-            color: var(--text-color); 
-        }
-        #current-date {
-            font-weight: 500; 
-            margin-right: 8px; 
-        }
-        #current-time {
-            font-weight: 700; 
-        }
-
-        /* 💡 บรรทัดล่างสุด (Toggle) */
-        .mode-toggle-control {
-            display: flex; 
-            align-items: center; 
-            gap: 12px; 
-            font-size: var(--font-size-toggle);
-            margin: 0; 
-            color: var(--light-text-color, var(--text-color)); 
-            font-weight: 300; 
-        }
-        body.dark-mode .mode-toggle-control {
-            color: var(--light-text-color);
-        }
-
-        
-        /* 💡 Marker Styles (คงเดิม) */
+        /* 💡 Marker Styles */
         .market-icon {
             background-color: #ffffff; 
             border-radius: 50%;
@@ -148,68 +163,39 @@
         
         @keyframes pulse-open { 0% { box-shadow: 0 0 0 0 rgba(40, 167, 69, 0.4); } 70% { box-shadow: 0 0 0 10px rgba(40, 167, 69, 0); } 100% { box-shadow: 0 0 0 0 rgba(40, 167, 69, 0); } }
         
-        /* 🎨 Toggle Switch/Tooltip Styles */
-        .toggle-switch { position: relative; display: inline-block; width: 55px; height: 28px; } 
-        .toggle-switch input { opacity: 0; width: 0; height: 0; }
-        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #ccc; transition: .4s; border-radius: 28px; } 
-        .slider:before { position: absolute; content: ""; height: 20px; width: 20px; left: 4px; bottom: 4px; background-color: white; transition: .4s; border-radius: 50%; } 
-        input:checked + .slider { background-color: var(--open-color); }
-        input:checked + .slider:before { transform: translateX(27px); } 
-
-        /* 💡 ปรับขนาด Font ใน Tooltip และสีตามโหมด (คงเดิม) */
-        .leaflet-tooltip { 
-            border-color: var(--border-color); 
-            font-size: 0.95em; 
-        }
-        .leaflet-tooltip-bottom:before { border-top-color: var(--card-bg); }
-        .dark-mode .leaflet-tooltip, .dark-mode .leaflet-popup-content-wrapper, .dark-mode .leaflet-popup-tip {
-            background: var(--card-bg);
-            color: var(--text-color);
-        }
-
-        /* 💡 Media Query สำหรับการปรับ Header ในหน้าจอขนาดเล็ก (Mobile) */
+        /* 💡 Media Query สำหรับ Mobile */
         @media (max-width: 768px) {
             
             :root {
                 --header-height-mobile-px: 140px; 
                 --header-height-desktop-px: var(--header-height-mobile-px);
-                --font-size-title: 1.8em; 
-                --font-size-time: 1.2em;  
-                --font-size-toggle: 1.0em; 
-                --header-spacing: 6px; 
-                --header-padding-x: 20px; 
-            }
-            
-            .header {
-                height: var(--header-height-mobile-px); 
-                padding: 10px var(--header-padding-x); 
-                box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); 
-            }
-            
-            .header-top, .time-display, .mode-toggle-control {
-                width: 100%;
-                margin: 0; 
-            }
-            
-            .mode-toggle-control {
-                justify-content: flex-start;
+                --legend-height-mobile-px: 30px; 
+                --legend-height-desktop-px: var(--legend-height-mobile-px);
+                --footer-height-px: 25px; 
             }
             
             #mapid {
-                height: calc(100vh - var(--header-height-mobile-px)); 
+                height: calc(100vh - var(--header-height-mobile-px) - var(--legend-height-mobile-px) - var(--footer-height-px)); 
             }
             
-            /* 💡 ปรับตำแหน่งปุ่มควบคุมบนมือถือ */
             .leaflet-top.leaflet-right {
-                top: var(--header-height-mobile-px); 
+                top: calc(var(--header-height-mobile-px) + var(--legend-height-mobile-px)); 
                 padding-top: 10px; 
                 right: 5px; 
             }
             
-            .toggle-switch { width: 45px; height: 22px; } 
-            .slider { border-radius: 22px; }
-            .slider:before { height: 14px; width: 14px; left: 4px; bottom: 4px; } 
-            input:checked + .slider:before { transform: translateX(23px); }
+            .legend-bar {
+                height: var(--legend-height-mobile-px);
+                gap: 15px;
+                font-size: 0.9em;
+            }
+            .legend-icon {
+                width: 12px;
+                height: 12px;
+            }
+            .footer {
+                font-size: 0.7em;
+            }
         }
     </style>
 </head>
@@ -233,7 +219,26 @@
         </div>
     </div>
     
+    <div class="legend-bar">
+        <div class="legend-item">
+            <div class="legend-icon open-icon"></div>
+            <span>**สีเขียว**: เปิดทำการ (Open)</span>
+        </div>
+        <div class="legend-item">
+            <div class="legend-icon closed-icon"></div>
+            <span>**สีแดง**: ปิดทำการ (Closed)</span>
+        </div>
+        <div class="legend-item">
+            <div class="legend-icon near-icon"></div>
+            <span>**สีเหลือง**: ใกล้เปิด/ปิด หรือพักกลางวัน (Near/Break)</span>
+        </div>
+    </div>
+    
     <div id="mapid"></div>
+
+    <div class="footer">
+        2025 Copyright/Developer by thetylerlab
+    </div>
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
         
@@ -319,10 +324,35 @@
             return `${String(hours).padStart(2, '0')} ชม. ${String(minutes).padStart(2, '0')} น. ${String(seconds).padStart(2, '0')} ว.`;
         }
 
+        // --- ฟังก์ชัน getMarketStatus (รวมการตรวจสอบวันหยุดสุดสัปดาห์) ---
         function getMarketStatus(market, now) { 
+            const dayOfWeek = now.getDay(); // 0 = Sunday, 6 = Saturday
             let openTimeStr, closeTimeStr, breakStartStr, breakEndStr;
             let currentDST = market.dst ? isDST(now) : false;
             let dstStatus = market.dst ? (currentDST ? 'ฤดูร้อน (DST)' : 'ฤดูหนาว') : '';
+            
+            // 💡 ตรวจสอบวันหยุดสุดสัปดาห์ (เสาร์/อาทิตย์)
+            if (dayOfWeek === 0 || dayOfWeek === 6) { 
+                let nextOpenTime = new Date(now);
+                nextOpenTime.setDate(now.getDate() + (dayOfWeek === 0 ? 1 : 2)); 
+
+                const defaultOpenTimeStr = market.open || market.openWinter || market.openSummer;
+                if(defaultOpenTimeStr) {
+                    const [h, m] = defaultOpenTimeStr.split(':')[0].split('/').map(Number); 
+                    nextOpenTime.setHours(h, m || 0, 0, 0);
+                }
+                
+                const diffMs = nextOpenTime - now;
+                return { 
+                    status: '❌ ปิดทำการ (วันหยุดสุดสัปดาห์)', 
+                    countdownText: `จะเปิดในวันจันทร์ เวลา ${defaultOpenTimeStr} อีก: ${formatTimeDiff(diffMs)}`, 
+                    statusClass: 'closed', 
+                    tradingHours: 'วันจันทร์ – ศุกร์' + (market.breakStart ? ' (มีพักกลางวัน)' : ''),
+                    dstStatus
+                };
+            }
+            
+            // --- ส่วนคำนวณเวลาทำการปกติในวันธรรมดา: จันทร์-ศุกร์ ---
             
             if (market.dst) {
                 openTimeStr = currentDST ? market.openSummer : market.openWinter;
@@ -357,15 +387,7 @@
             } else if (openTime.getTime() > closeTime.getTime() && now.getHours() < closeTime.getHours()) {
                 closeTime.setDate(closeTime.getDate() + 1);
                 if (breakStartTime) breakEndTime.setDate(breakEndTime.getDate() + 1); 
-            } else if (now > closeTime) { 
-                openTime.setDate(openTime.getDate() + 1);
-                closeTime.setDate(closeTime.getDate() + 1);
-                if (breakStartTime) {
-                    breakStartTime.setDate(breakStartTime.getDate() + 1);
-                    breakEndTime.setDate(breakEndTime.getDate() + 1);
-                }
             }
-
 
             const isDuringBreak = breakStartTime && breakEndTime && now >= breakStartTime && now < breakEndTime;
             const isOpen = now >= openTime && now < closeTime && !isDuringBreak;
@@ -383,20 +405,37 @@
             } else {
                 let nextOpenTime = openTime;
                 
-                if (openTime < now && now > closeTime) { 
-                    nextOpenTime = getTimeObject(openTimeStr, new Date(now.getTime() + 86400000));
+                if (now > closeTime && openTime.getTime() <= closeTime.getTime()) {
+                    nextOpenTime.setDate(openTime.getDate() + 1);
+                    if (dayOfWeek === 5) { 
+                        nextOpenTime.setDate(openTime.getDate() + 3); 
+                    }
+                } else if (openTime.getTime() > closeTime.getTime() && now > closeTime && now > openTime) { 
+                    nextOpenTime.setDate(openTime.getDate() + 1);
+                    if (dayOfWeek === 5) { 
+                        nextOpenTime.setDate(openTime.getDate() + 3); 
+                    }
+                } else if (now > closeTime && now < openTime) {
                 }
                 
-                if (openTime.getTime() > closeTime.getTime() && now > closeTime && now < openTime) {
-                    nextOpenTime = openTime;
-                } else if (openTime.getTime() > closeTime.getTime() && now > closeTime && now > openTime) {
-                    nextOpenTime = getTimeObject(openTimeStr, new Date(now.getTime() + 86400000));
+                if (openTime < now && now > closeTime) { 
+                     nextOpenTime = new Date(now);
+                     nextOpenTime.setHours(openTime.getHours(), openTime.getMinutes(), 0, 0);
+                     nextOpenTime.setDate(nextOpenTime.getDate() + 1);
+                     if (dayOfWeek === 5) { 
+                         nextOpenTime.setDate(nextOpenTime.getDate() + 2); 
+                     }
                 }
 
                 diffMs = nextOpenTime - now;
                 status = '❌ ปิดทำการ';
                 statusClass = 'closed';
-                countdownText = `จะเปิดในอีก: ${formatTimeDiff(diffMs)}`;
+                
+                if (dayOfWeek === 5 && now > closeTime) {
+                     countdownText = `จะเปิดในวันจันทร์ อีก: ${formatTimeDiff(diffMs)}`;
+                } else {
+                     countdownText = `จะเปิดในอีก: ${formatTimeDiff(diffMs)}`;
+                }
             }
 
             const fifteenMinutes = 15 * 60 * 1000;
@@ -408,10 +447,10 @@
                 statusClass = 'near';
             }
             
-            return { status, countdownText, statusClass, tradingHours, dstStatus };
+            return { status, countdownText, statusClass, tradingHours: `วันจันทร์ – ศุกร์ (${tradingHours})`, dstStatus };
         }
         
-        // --- ฟังก์ชัน: กำหนดจุดเริ่มต้นของแผนที่ (คงเดิม) ---
+        // --- (ฟังก์ชันอื่นๆ คงเดิม) ---
         function determineInitialView() {
             const now = new Date();
             let targetLat = 13.7563; 
@@ -420,7 +459,7 @@
             let marketToCenter = null;
             
             const thailandMarket = markets.find(m => m.id === 'SET');
-            if (thailandMarket) {
+            if (thailandMarket && now.getDay() >= 1 && now.getDay() <= 5) {
                 const statusData = getMarketStatus(thailandMarket, now);
                 if (statusData.statusClass === 'open' || statusData.statusClass === 'near') {
                     marketToCenter = thailandMarket;
@@ -429,7 +468,7 @@
             
             if (!marketToCenter) {
                 for (const market of markets) {
-                    if (market.id !== 'SET') {
+                    if (market.id !== 'SET' && now.getDay() >= 1 && now.getDay() <= 5) {
                         const statusData = getMarketStatus(market, now);
                         if (statusData.statusClass === 'open' || statusData.statusClass === 'near') {
                             marketToCenter = market;
@@ -448,7 +487,7 @@
             return { lat: targetLat, lon: targetLon, zoom: targetZoom }; 
         }
 
-        // --- Leaflet Map Setup and Update (คงเดิม) ---
+
         function initMap() {
              const initialView = determineInitialView();
 
@@ -539,7 +578,7 @@
             });
         }
 
-        // 💡 Event Listener สำหรับการปรับขนาดหน้าจอ (คงเดิม)
+        // 💡 Event Listener สำหรับการปรับขนาดหน้าจอ
         window.addEventListener('resize', () => {
              if (mymap) {
                  mymap.invalidateSize(true); 

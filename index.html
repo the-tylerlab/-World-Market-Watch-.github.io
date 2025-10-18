@@ -110,14 +110,14 @@
             gap: 8px; 
         }
 
-        /* 🔴 วงกลมสำหรับ Legend (CSS Corrected) */
+        /* 🔴 วงกลมสำหรับ Legend */
         .legend-icon {
             width: 12px; 
             height: 12px;
             border-radius: 50%; /* ทำให้เป็นวงกลม */
             display: inline-block;
             box-shadow: 0 0 5px rgba(0, 0, 0, 0.2); 
-            flex-shrink: 0; /* ป้องกันการย่อตัว */
+            flex-shrink: 0; 
         }
         
         .legend-icon.open-icon { background-color: var(--open-color); }
@@ -151,7 +151,7 @@
             width: 100%;
             background-color: var(--bg-color); 
             z-index: 1; 
-            position: relative; /* สำคัญสำหรับ Banner */
+            position: relative; 
         }
         
         /* 💡 MARKET CLOSED BANNER */
@@ -167,7 +167,7 @@
             font-weight: 700;
             z-index: 1000; 
             transition: opacity 0.3s;
-            display: none; /* เริ่มต้นซ่อนไว้ */
+            display: none; 
         }
         .closed-banner.show {
             display: block;
@@ -208,29 +208,34 @@
         .leaflet-pane a:focus, 
         .leaflet-pane *:focus,
         .leaflet-container a:focus,
-        .leaflet-container *:focus,
-        .leaflet-popup-content-wrapper * { 
+        .leaflet-container *:focus { 
             outline: none !important;
             box-shadow: none !important;
         }
         
-        /* 💡 ลบปุ่ม Close Button ของ Leaflet Popup (ปุ่มสีแดง) */
-        .leaflet-popup-close-button {
-            display: none; 
+        /* 💡 สไตล์สำหรับ Tooltip (แทน Popup) */
+        .leaflet-tooltip {
+             padding: 0; /* ลบ padding เริ่มต้น */
+             margin: 0; /* ลบ margin เริ่มต้น */
+             opacity: 0.95 !important;
+             background-color: transparent !important; /* ให้ Tooltip โปร่งใส */
+             border: none !important; /* ลบขอบ Tooltip */
+             pointer-events: none !important; /* ป้องกันการบล็อกการโต้ตอบกับแผนที่ */
         }
         
-        /* 💡 สไตล์สำหรับ Popup */
-        .leaflet-popup-content-wrapper {
+        /* 💡 สไตล์สำหรับเนื้อหา Tooltip */
+        .leaflet-tooltip-pane .market-tooltip-content {
             font-family: 'Chakra Petch', sans-serif;
             font-size: 0.9em;
-            background-color: var(--card-bg);
+            background-color: var(--card-bg); /* ใช้สี Card Background */
             color: var(--text-color);
-            opacity: 0.95;
-            padding: 10px 10px; 
+            padding: 10px 12px; 
             border-radius: 5px;
             box-shadow: 0 3px 10px rgba(0, 0, 0, 0.2);
+            border: 1px solid var(--border-color);
+            white-space: nowrap; 
         }
-
+        
         /* 💡 ปรับตำแหน่งของปุ่มควบคุมแผนที่ */
         .leaflet-top.leaflet-right {
             top: auto; 
@@ -653,36 +658,46 @@
                     iconAnchor: [10, 10] 
                 });
 
-                // 💡 CONTENT FOR POPUP
-                const popupContent = `
-                    <span style="font-weight: 700;">${market.name}</span> (${market.exchange})<br>
-                    สถานะ: <span style="font-weight: 700; color: ${statusData.statusClass === 'open' ? '#28a745' : (statusData.statusClass === 'closed' ? '#dc3545' : '#ffc107')}">${statusData.status}</span><br>
-                    ${statusData.countdownText}<br>
-                    เวลาทำการ (🇹🇭): ${statusData.tradingHours}
-                    ${statusData.dstStatus ? `<br><span style="font-style: italic; opacity: 0.8;">[${statusData.dstStatus}]</span>` : ''}
+                // 💡 CONTENT FOR TOOLTIP (ใช้ class เพื่อจัดการ CSS)
+                const tooltipContent = `
+                    <div class="market-tooltip-content">
+                        <span style="font-weight: 700;">${market.name}</span> (${market.exchange})<br>
+                        สถานะ: <span style="font-weight: 700; color: ${statusData.statusClass === 'open' ? '#28a745' : (statusData.statusClass === 'closed' ? '#dc3545' : '#ffc107')}">${statusData.status}</span><br>
+                        ${statusData.countdownText}<br>
+                        เวลาทำการ (🇹🇭): ${statusData.tradingHours}
+                        ${statusData.dstStatus ? `<br><span style="font-style: italic; opacity: 0.8;">[${statusData.dstStatus}]</span>` : ''}
+                    </div>
                 `;
 
                 if (!marketMarkers[market.id]) {
                     // Create marker with custom icon
                     marketMarkers[market.id] = L.marker([market.lat, market.lon], { icon: marketIcon }).addTo(mymap);
                     
-                    // Bind Popup (ใช้ Popup แทน Tooltip)
-                    marketMarkers[market.id].bindPopup(popupContent, {
-                        closeButton: false, // ลบปุ่มปิดสีแดง
-                        autoClose: true,    // จะปิดเองเมื่อคลิกที่อื่น
-                        offset: L.point(0, -10)
+                    // 🌟 Bind Tooltip แทน Popup
+                    marketMarkers[market.id].bindTooltip(tooltipContent, {
+                        permanent: false, // ไม่ให้แสดงถาวร
+                        direction: 'right', 
+                        offset: L.point(10, 0),
+                        sticky: true, // ตามเมาส์/นิ้วเมื่อเคลื่อนที่
+                        interactive: true, // สามารถ interact กับเนื้อหาได้ (เผื่อคลิกภายใน)
+                        className: 'market-tooltip', // Custom class
                     });
+
+                    // 💡 บังคับให้ Tooltip แสดงเมื่อคลิก/แตะ (สำหรับมือถือ)
+                    marketMarkers[market.id].on('click', function (e) {
+                         this.toggleTooltip();
+                    });
+
 
                 } else {
                     // Update existing marker's icon
                     marketMarkers[market.id].setIcon(marketIcon); 
                     marketMarkers[market.id].setOpacity(1.0);
                     
-                    // Update Popup content
-                    // **Fix:** ตรวจสอบว่า Popup เปิดอยู่หรือไม่ ก่อนจะอัปเดตเนื้อหา (เพิ่มความเสถียร)
-                    const popup = marketMarkers[market.id].getPopup();
-                    if (popup) {
-                        popup.setContent(popupContent);
+                    // Update Tooltip content
+                    const tooltip = marketMarkers[market.id].getTooltip();
+                    if (tooltip) {
+                        tooltip.setContent(tooltipContent);
                     }
                 }
             });

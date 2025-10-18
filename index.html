@@ -215,19 +215,18 @@
         
         /* 💡 สไตล์สำหรับ Tooltip (แทน Popup) */
         .leaflet-tooltip {
-             padding: 0; /* ลบ padding เริ่มต้น */
-             margin: 0; /* ลบ margin เริ่มต้น */
+             padding: 0; 
+             margin: 0; 
              opacity: 0.95 !important;
-             background-color: transparent !important; /* ให้ Tooltip โปร่งใส */
-             border: none !important; /* ลบขอบ Tooltip */
-             pointer-events: none !important; /* ป้องกันการบล็อกการโต้ตอบกับแผนที่ */
+             background-color: transparent !important; 
+             border: none !important; 
         }
         
         /* 💡 สไตล์สำหรับเนื้อหา Tooltip */
         .leaflet-tooltip-pane .market-tooltip-content {
             font-family: 'Chakra Petch', sans-serif;
             font-size: 0.9em;
-            background-color: var(--card-bg); /* ใช้สี Card Background */
+            background-color: var(--card-bg); 
             color: var(--text-color);
             padding: 10px 12px; 
             border-radius: 5px;
@@ -601,13 +600,26 @@
              updateDashboardMap();
              setInterval(updateDashboardMap, 1000); 
 
-             // 💡 Event Listener สำหรับปิด Sticky Tooltip เมื่อคลิกที่แผนที่
+             // 💡 Event Listener สำหรับปิด Sticky Tooltip เมื่อคลิกที่แผนที่ (ยกเว้น Marker)
              mymap.on('click', function(e) {
+                // ตรวจสอบว่าคลิกบน marker หรือไม่ ถ้าใช่ event จะถูกหยุดตั้งแต่ต้น (ใน marker handler)
                 if (stickyTooltip) {
-                    stickyTooltip.closeTooltip();
-                    stickyTooltip.unbindTooltip();
-                    // Restore default tooltip (if needed), though in this setup, it's safer to leave it unbound.
-                    stickyTooltip = null;
+                    // หา marker ที่ผูกกับ stickyTooltip
+                    let markerToUnstick = null;
+                    for (const id in marketMarkers) {
+                        if (marketMarkers[id].getTooltip() === stickyTooltip) {
+                            markerToUnstick = marketMarkers[id];
+                            break;
+                        }
+                    }
+                    
+                    if (markerToUnstick) {
+                        // ปิด tooltip
+                        markerToUnstick.closeTooltip();
+                        // ตั้งค่า permanent กลับเป็น false
+                        markerToUnstick.getTooltip().setTooltipOptions({ permanent: false });
+                        stickyTooltip = null;
+                    }
                 }
             });
         }
@@ -669,14 +681,12 @@
                     iconAnchor: [10, 10] 
                 });
 
-                // 💡 CONTENT FOR TOOLTIP
+                // 💡 CONTENT FOR TOOLTIP (สถานะอย่างเดียว)
                 const tooltipContent = `
                     <div class="market-tooltip-content">
                         <span style="font-weight: 700;">${market.name}</span> (${market.exchange})<br>
                         สถานะ: <span style="font-weight: 700; color: ${statusData.statusClass === 'open' ? '#28a745' : (statusData.statusClass === 'closed' ? '#dc3545' : '#ffc107')}">${statusData.status}</span><br>
-                        ${statusData.countdownText}<br>
-                        เวลาทำการ (🇹🇭): ${statusData.tradingHours}
-                        ${statusData.dstStatus ? `<br><span style="font-style: italic; opacity: 0.8;">[${statusData.dstStatus}]</span>` : ''}
+                        ${statusData.countdownText}
                     </div>
                 `;
 
@@ -685,32 +695,61 @@
                     const marker = L.marker([market.lat, market.lon], { icon: marketIcon }).addTo(mymap);
                     marketMarkers[market.id] = marker;
                     
-                    // 🌟 Set up Tooltip but don't bind it as permanent yet
+                    // 🌟 Set up Tooltip
                     marker.bindTooltip(tooltipContent, {
                         permanent: false, // เริ่มต้นไม่ใช่แบบถาวร
                         direction: 'right', 
                         offset: L.point(10, 0),
-                        sticky: false, // ปิด sticky เพื่อให้ควบคุมง่าย
+                        sticky: false, 
                         interactive: true,
                         className: 'market-tooltip',
                     });
+                    
+                    // 💡 EVENT HANDLER: Hover to Show (Desktop Only/Touch and Hold)
+                    marker.on('mouseover', function (e) {
+                        if (!stickyTooltip) {
+                            this.openTooltip();
+                        }
+                    });
+
+                    marker.on('mouseout', function (e) {
+                         if (this.getTooltip() !== stickyTooltip) {
+                            this.closeTooltip();
+                        }
+                    });
+
 
                     // 💡 EVENT HANDLER: Click to Stick/Unstick
                     marker.on('click', function (e) {
+                         // 🌟 CRITICAL FIX: Stop event propagation to prevent marker disappearance
+                         L.DomEvent.stopPropagation(e);
+                         
                          const currentTooltip = this.getTooltip();
                          
                          if (stickyTooltip === currentTooltip) {
-                              // ถ้าคลิกซ้ำที่ marker เดิม ให้ปิด tooltip
-                              currentTooltip.closeTooltip();
+                              // ถ้าคลิกซ้ำที่ marker เดิม ให้ปิด tooltip (Unstick)
+                              this.closeTooltip();
+                              currentTooltip.setTooltipOptions({ permanent: false }); // ตั้งค่ากลับ
                               stickyTooltip = null;
                          } else {
                               // ถ้ามี sticky tooltip ตัวอื่นเปิดอยู่ ให้ปิดก่อน
                               if (stickyTooltip) {
-                                   stickyTooltip.closeTooltip();
-                                   // Note: No need to unbind/rebind as the content updates automatically
+                                  // 1. หา marker ที่ผูกกับ stickyTooltip ปัจจุบัน
+                                  let prevMarker = null;
+                                  for (const id in marketMarkers) {
+                                      if (marketMarkers[id].getTooltip() === stickyTooltip) {
+                                          prevMarker = marketMarkers[id];
+                                          break;
+                                      }
+                                  }
+                                  // 2. ปิดและตั้งค่า permanent ของตัวเก่ากลับ
+                                  if (prevMarker) {
+                                       prevMarker.closeTooltip();
+                                       stickyTooltip.setTooltipOptions({ permanent: false });
+                                  }
                               }
                               
-                              // เปิด tooltip และกำหนดให้เป็น sticky
+                              // เปิด tooltip ของ marker ปัจจุบันและกำหนดให้เป็น sticky
                               currentTooltip.setTooltipOptions({ permanent: true });
                               this.openTooltip();
                               stickyTooltip = currentTooltip;

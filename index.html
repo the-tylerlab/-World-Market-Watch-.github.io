@@ -98,7 +98,7 @@
             align-items: center;
             gap: 30px;
             color: var(--text-color);
-            font-size: var(--legend-font-size-desktop); /* ขนาดตัวอักษรของ Legend ที่เล็กตามต้องการ */
+            font-size: var(--legend-font-size-desktop); 
             padding: 5px 0 0 0; 
             margin-top: calc(-1 * var(--header-gap-normal)); 
             margin-bottom: 5px; 
@@ -110,12 +110,14 @@
             gap: 8px; 
         }
 
+        /* 🔴 วงกลมสำหรับ Legend (CSS Corrected) */
         .legend-icon {
             width: 12px; 
             height: 12px;
-            border-radius: 50%;
+            border-radius: 50%; /* ทำให้เป็นวงกลม */
             display: inline-block;
             box-shadow: 0 0 5px rgba(0, 0, 0, 0.2); 
+            flex-shrink: 0; /* ป้องกันการย่อตัว */
         }
         
         .legend-icon.open-icon { background-color: var(--open-color); }
@@ -143,13 +145,34 @@
         input:checked + .slider:before { transform: translateX(26px); }
 
 
-        /* 💡 Map and Marker Container */
+        /* 💡 Map Container */
         #mapid {
             flex-grow: 1; 
             width: 100%;
             background-color: var(--bg-color); 
             z-index: 1; 
+            position: relative; /* สำคัญสำหรับ Banner */
         }
+        
+        /* 💡 MARKET CLOSED BANNER */
+        .closed-banner {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            background-color: #dc3545; /* Red */
+            color: white;
+            text-align: center;
+            padding: 8px 0;
+            font-weight: 700;
+            z-index: 1000; 
+            transition: opacity 0.3s;
+            display: none; /* เริ่มต้นซ่อนไว้ */
+        }
+        .closed-banner.show {
+            display: block;
+        }
+
         
         /* 💡 Marker Icon (Simple Dot Style - คงเดิม) */
         .market-icon {
@@ -180,22 +203,23 @@
             animation: pulse-float 1.2s infinite ease-in-out; 
             cursor: pointer; 
         }
-
-        /* 💡 FIX 1: ลบ Focus Outline สีแดง/น้ำเงิน จากองค์ประกอบทั้งหมดใน Leaflet */
-        .leaflet-marker-icon:focus, 
-        .leaflet-popup-content-wrapper:focus,
+        
+        /* 💡 FINAL FIX: ลบ Focus Outline สีแดง/น้ำเงิน ออกจากทุกองค์ประกอบใน Leaflet Pane (ขั้นเด็ดขาด) */
+        .leaflet-pane a:focus, 
+        .leaflet-pane *:focus,
         .leaflet-container a:focus,
-        .leaflet-popup-content * { /* เลือกทุกองค์ประกอบภายใน Popup */
+        .leaflet-container *:focus,
+        .leaflet-popup-content-wrapper * { 
             outline: none !important;
             box-shadow: none !important;
         }
-
+        
         /* 💡 ลบปุ่ม Close Button ของ Leaflet Popup (ปุ่มสีแดง) */
         .leaflet-popup-close-button {
             display: none; 
         }
         
-        /* 💡 สไตล์สำหรับ Popup (เพื่อให้อ่านง่าย) */
+        /* 💡 สไตล์สำหรับ Popup */
         .leaflet-popup-content-wrapper {
             font-family: 'Chakra Petch', sans-serif;
             font-size: 0.9em;
@@ -203,8 +227,10 @@
             color: var(--text-color);
             opacity: 0.95;
             padding: 10px 10px; 
+            border-radius: 5px;
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.2);
         }
-        
+
         /* 💡 ปรับตำแหน่งของปุ่มควบคุมแผนที่ */
         .leaflet-top.leaflet-right {
             top: auto; 
@@ -233,7 +259,7 @@
                 --header-gap-normal: 8px; 
                 --header-gap-double: 16px; 
                 --legend-height-px: 30px; 
-                --legend-font-size-desktop: 0.7em; /* เล็กมากสำหรับ Mobile */
+                --legend-font-size-desktop: 0.7em; 
             }
             
             .header {
@@ -243,6 +269,10 @@
             .leaflet-top.leaflet-right {
                 padding-top: 5px; 
                 right: 5px; 
+            }
+            
+            .closed-banner {
+                font-size: 0.9em;
             }
         }
     </style>
@@ -282,7 +312,11 @@
         </div>
     </div>
     
-    <div id="mapid"></div>
+    <div id="mapid">
+        <div class="closed-banner" id="closedBanner">
+            🚨 **ตลาดหลักทั้งหมดปิดทำการ**! จะเปิดอีกครั้งตามช่วงเวลาทำการของแต่ละประเทศ
+        </div>
+    </div>
 
     <div class="footer">
         2025 Copyright/Developer by thetylerlab
@@ -387,15 +421,20 @@
                 if(defaultOpenTimeStr) {
                     const [h, m] = defaultOpenTimeStr.split(':')[0].split('/').map(Number); 
                     nextOpenTime.setHours(h, m || 0, 0, 0);
+                } else {
+                    nextOpenTime = new Date(now);
+                    nextOpenTime.setDate(now.getDate() + (dayOfWeek === 0 ? 1 : 2)); // Default to Monday
+                    nextOpenTime.setHours(10, 0, 0, 0); // Assume 10:00 AM 
                 }
                 
                 const diffMs = nextOpenTime - now;
                 return { 
                     status: '❌ ปิดทำการ (วันหยุดสุดสัปดาห์)', 
-                    countdownText: `จะเปิดในวันจันทร์ เวลา ${defaultOpenTimeStr} อีก: ${formatTimeDiff(diffMs)}`, 
+                    countdownText: `จะเปิดในวันจันทร์${defaultOpenTimeStr ? ` เวลา ${defaultOpenTimeStr}` : ''} อีก: ${formatTimeDiff(diffMs)}`, 
                     statusClass: 'closed', 
                     tradingHours: 'วันจันทร์ – ศุกร์' + (market.breakStart ? ' (มีพักกลางวัน)' : ''),
-                    dstStatus
+                    dstStatus,
+                    isClosed: true
                 };
             }
             
@@ -496,42 +535,22 @@
                 statusClass = 'near';
             }
             
-            return { status, countdownText, statusClass, tradingHours: `วันจันทร์ – ศุกร์ (${tradingHours})`, dstStatus };
+            return { 
+                status, 
+                countdownText, 
+                statusClass, 
+                tradingHours: `วันจันทร์ – ศุกร์ (${tradingHours})`, 
+                dstStatus,
+                isClosed: statusClass === 'closed' 
+            };
         }
         
-        // --- (ฟังก์ชันอื่นๆ คงเดิม) ---
+        // --- ฟังก์ชันกำหนด Initial View (คงที่) ---
         function determineInitialView() {
-            const now = new Date();
-            let targetLat = 13.7563; 
-            let targetLon = 100.5018;
-            let targetZoom = 1.5; 
-            let marketToCenter = null;
-            
-            const thailandMarket = markets.find(m => m.id === 'SET');
-            if (thailandMarket && now.getDay() >= 1 && now.getDay() <= 5) {
-                const statusData = getMarketStatus(thailandMarket, now);
-                if (statusData.statusClass === 'open' || statusData.statusClass === 'near') {
-                    marketToCenter = thailandMarket;
-                }
-            }
-            
-            if (!marketToCenter) {
-                for (const market of markets) {
-                    if (market.id !== 'SET' && now.getDay() >= 1 && now.getDay() <= 5) {
-                        const statusData = getMarketStatus(market, now);
-                        if (statusData.statusClass === 'open' || statusData.statusClass === 'near') {
-                            marketToCenter = market;
-                            break; 
-                        }
-                    }
-                }
-            }
-
-            if (marketToCenter) {
-                targetLat = marketToCenter.lat;
-                targetLon = marketToCenter.lon;
-                targetZoom = 4; 
-            }
+            // ใช้ค่าคงที่เพื่อป้องกันไม่ให้แผนที่ขยับ
+            const targetLat = 13.7563; // Bangkok
+            const targetLon = 100.5018; 
+            const targetZoom = 1.5; // Zoom out
             
             return { lat: targetLat, lon: targetLon, zoom: targetZoom }; 
         }
@@ -565,7 +584,7 @@
 
              setMapTileLayer(document.body.classList.contains('dark-mode'));
              
-             // 🌟 FINAL FIX: Force map size calculation after a short delay
+             // 🌟 Force map size calculation
              setTimeout(() => {
                  mymap.invalidateSize(true); 
                  setZoomControlPosition();
@@ -609,6 +628,7 @@
 
             const timeElement = document.getElementById('current-time');
             const dateElement = document.getElementById('current-date'); 
+            const closedBanner = document.getElementById('closedBanner');
             
             if (timeElement) {
                 timeElement.textContent = now.toLocaleTimeString('th-TH', timeOptions);
@@ -617,16 +637,23 @@
                  dateElement.textContent = now.toLocaleDateString('th-TH', dateOptions);
             }
             
+            let allMarketsClosed = true;
+
             markets.forEach(market => {
                 const statusData = getMarketStatus(market, now);
+
+                if (statusData.statusClass !== 'closed') {
+                    allMarketsClosed = false; 
+                }
 
                 const marketIcon = L.divIcon({
                     className: `market-icon ${statusData.statusClass}`,
                     html: '', 
                     iconSize: [20, 20], 
-                    iconAnchor: [10, 10] // Anchor is set to half of iconSize for center positioning
+                    iconAnchor: [10, 10] 
                 });
 
+                // 💡 CONTENT FOR POPUP
                 const popupContent = `
                     <span style="font-weight: 700;">${market.name}</span> (${market.exchange})<br>
                     สถานะ: <span style="font-weight: 700; color: ${statusData.statusClass === 'open' ? '#28a745' : (statusData.statusClass === 'closed' ? '#dc3545' : '#ffc107')}">${statusData.status}</span><br>
@@ -639,24 +666,11 @@
                     // Create marker with custom icon
                     marketMarkers[market.id] = L.marker([market.lat, market.lon], { icon: marketIcon }).addTo(mymap);
                     
-                    // Bind Popup 
+                    // Bind Popup (ใช้ Popup แทน Tooltip)
                     marketMarkers[market.id].bindPopup(popupContent, {
-                        closeButton: false, // ปิดปุ่ม Close Button 
-                        autoClose: false,
+                        closeButton: false, // ลบปุ่มปิดสีแดง
+                        autoClose: true,    // จะปิดเองเมื่อคลิกที่อื่น
                         offset: L.point(0, -10)
-                    });
-
-                    // Implement Popup on Mouseover/Click
-                    marketMarkers[market.id].on('mouseover', function (e) {
-                         this.openPopup();
-                    });
-                    marketMarkers[market.id].on('mouseout', function (e) {
-                         this.closePopup();
-                    });
-                    
-                    // For touch devices (mobile), click will show the popup
-                    marketMarkers[market.id].on('click', function (e) {
-                         this.openPopup();
                     });
 
                 } else {
@@ -665,9 +679,20 @@
                     marketMarkers[market.id].setOpacity(1.0);
                     
                     // Update Popup content
-                    marketMarkers[market.id].getPopup().setContent(popupContent);
+                    // **Fix:** ตรวจสอบว่า Popup เปิดอยู่หรือไม่ ก่อนจะอัปเดตเนื้อหา (เพิ่มความเสถียร)
+                    const popup = marketMarkers[market.id].getPopup();
+                    if (popup) {
+                        popup.setContent(popupContent);
+                    }
                 }
             });
+            
+            // 💡 LOGIC FOR CLOSED BANNER (รวม เสาร์-อาทิตย์)
+            if (allMarketsClosed) {
+                closedBanner.classList.add('show');
+            } else {
+                closedBanner.classList.remove('show');
+            }
         }
 
         // 💡 Event Listener สำหรับการปรับขนาดหน้าจอ

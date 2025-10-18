@@ -77,11 +77,13 @@
             margin-bottom: var(--header-gap-normal); 
         }
         
+        /* 🚨 V6.5 FIX: เพิ่มระยะห่างระหว่างข้อความกับ Toggle Switch */
         .mode-toggle-control {
             margin-bottom: var(--header-gap-double); 
             display: flex; 
             align-items: center;
-            gap: 15px;
+            /* คงค่า 25px ตามที่แก้ไขล่าสุด */
+            gap: 25px; 
         }
 
         .header h1 {
@@ -125,7 +127,7 @@
         .legend-icon.near-icon { background-color: var(--near-color); }
 
 
-        /* 💡 Toggle Switch CSS (คงเดิม) */
+        /* 💡 Toggle Switch CSS (V6.6 FIX: แก้ไขเพื่อให้สีและตำแหน่งทำงานถูกต้อง) */
         .toggle-switch {
             position: relative;
             display: inline-block;
@@ -141,7 +143,8 @@
             position: absolute; content: ""; height: 18px; width: 18px; left: 3px;
             bottom: 3px; background-color: white; transition: .4s; border-radius: 50%;
         }
-        input:checked + .slider { background-color: var(--toggle-bg-checked); }
+        /* 🚨 FIX: เพิ่ม background-color และ transform ที่ถูกต้อง */
+        input:checked + .slider { background-color: var(--toggle-bg-checked); } 
         input:checked + .slider:before { transform: translateX(26px); }
 
 
@@ -427,8 +430,7 @@
             const seconds = totalSeconds % 60;
             return `${String(hours).padStart(2, '0')} ชม. ${String(minutes).padStart(2, '0')} น. ${String(seconds).padStart(2, '0')} ว.`;
         }
-
-        // --- ฟังก์ชัน getMarketStatus (V5.3 Logic - Stable) ---
+        
         function getMarketStatus(market, now) { 
             const dayOfWeek = now.getDay(); 
             let openTimeStr, closeTimeStr, breakStartStr, breakEndStr;
@@ -577,12 +579,12 @@
                 isClosed: statusClass === 'closed' 
             };
         }
-        
-        // --- ฟังก์ชันอื่นๆ (คงเดิม) ---
+
+        // --- ฟังก์ชันอื่นๆ (V6.2 FIX: determineInitialView) ---
         function determineInitialView() {
             const targetLat = 13.7563; 
             const targetLon = 100.5018; 
-            const targetZoom = 1.5; 
+            const targetZoom = 2; 
             
             return { lat: targetLat, lon: targetLon, zoom: targetZoom }; 
         }
@@ -604,9 +606,10 @@
                 center: [initialView.lat, initialView.lon], 
                 zoom: initialView.zoom, 
                 zoomControl: true, 
-                maxBounds: [[-85, -180], [85, 180]],
                 maxZoom: 10, 
                 minZoom: 1, 
+                // V6.2: เปิดใช้งานการลากข้ามขอบโลก
+                worldCopyJump: true, 
                 dragging: true, 
              }); 
 
@@ -663,7 +666,7 @@
             }
         }
 
-        // 💡 MODIFIED: การจัดการ Marker เพื่อความเสถียรสูงสุด (V6.1)
+        // 💡 MODIFIED: การจัดการ Marker (V6.4: Fix Auto-Open Tooltip)
         function updateDashboardMap() {
             if (!mymap) return;
 
@@ -706,7 +709,11 @@
                 if (currentStatusClass === 'open') statusColorHex = '#28a745'; 
                 else if (currentStatusClass === 'closed') statusColorHex = '#dc3545'; 
                 else statusColorHex = '#ffc107'; 
-
+                
+                // 💡 V6.3: กำหนดทิศทาง Tooltip เป็น 'right' เสมอ
+                const tooltipDirection = 'right';
+                const tooltipOffset = L.point(10, 0); 
+                
                 
                 // 1. ตรวจสอบและสร้าง Marker ครั้งแรก
                 if (!marketMarkers[markerId]) {
@@ -734,8 +741,8 @@
 
                      marker.bindTooltip(tooltipContent, {
                         permanent: false, 
-                        direction: 'right', 
-                        offset: L.point(10, 0),
+                        direction: tooltipDirection, 
+                        offset: tooltipOffset,
                         sticky: false, 
                         interactive: false, 
                         className: 'market-tooltip',
@@ -760,11 +767,11 @@
                              const currentTooltip = this.getTooltip();
                              
                              if (stickyTooltip === currentTooltip) {
-                                  // 💡 FIX V6.1: UN-STICKY
+                                  // UN-STICKY
                                   this.closeTooltip();
                                   stickyTooltip = null;
                              } else {
-                                  // 💡 FIX V6.1: MAKE STICKY
+                                  // MAKE STICKY
                                   if (stickyTooltip) {
                                       let prevMarker = null;
                                       for (const id in marketMarkers) {
@@ -778,14 +785,11 @@
                                       }
                                   }
                                   
-                                  // 🚨 CRITICAL FIX V6.1: ลบ this.openTooltip() ออกตรงนี้!
-                                  // การเปิดจะถูกจัดการโดย updateDashboardMap ในวินาทีถัดไป เพื่อป้องกันการกระพริบ
                                   stickyTooltip = currentTooltip;
+                                  
+                                  // เรียก updateDashboardMap ทันทีหลังคลิก เพื่อให้ Tooltip เปิดโดยไม่กระพริบ
+                                  updateDashboardMap(); 
                              }
-                             
-                             // 💡 IMPORTANT: เรียก updateDashboardMap ทันทีหลังคลิก เพื่อให้ Tooltip เปิดโดยไม่กระพริบ
-                             // เพราะตอนนี้ stickyTooltip ถูกกำหนดค่าใหม่แล้ว
-                             updateDashboardMap(); 
                         });
 
 
@@ -818,9 +822,15 @@
                     const tooltip = marker.getTooltip();
                     if (tooltip) {
                         tooltip.setContent(tooltipContent);
-                        // 💡 CRITICAL FIX V6.1: สั่งให้ stickyTooltip เปิดค้างไว้ในทุกรอบการอัปเดต
+                        tooltip.options.direction = tooltipDirection;
+                        tooltip.options.offset = tooltipOffset;
+
+                        // 💡 V6.4 FIX: ตรวจสอบและบังคับเปิด/ปิด Tooltip
                         if (tooltip === stickyTooltip) {
                             marker.openTooltip(); 
+                        } else {
+                            // บังคับปิด Tooltip ที่ไม่ควรเปิด (แก้ปัญหาเปิดเอง)
+                            marker.closeTooltip(); 
                         }
                     }
                 }

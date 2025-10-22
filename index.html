@@ -20,76 +20,89 @@
             --bg-color: #f4f7f9; 
             --card-bg: #ffffff;
             --text-color: #333333;
-            --open-color: #28a745; /* Green */
-            --closed-color: #dc3545; /* Red */
-            --near-color: #ffc107; /* Yellow */
+            --open-color: #28a745; 
+            --closed-color: #dc3545; 
+            --near-color: #ffc107; 
             --border-color: #e0e0e0;
             --toggle-bg: #ccc;
-            --toggle-bg-checked: #2196F3;
-            
-            /* Desktop Variables */
+            --toggle-bg-checked: #007bff; 
             --legend-height-px: 35px;       
             --legend-font-size-desktop: 0.8em; 
-            
-            /* 💡 Spacing Variables */
             --header-gap-normal: 10px; 
             --header-gap-double: 20px; 
+
+            .marker-cluster-small { background-color: rgba(0, 123, 255, 0.3); border: 1px solid rgba(0, 123, 255, 0.6); } 
+            .marker-cluster-small div { background-color: rgba(0, 123, 255, 0.8); color: white; }
+            .marker-cluster-medium { background-color: rgba(255, 193, 7, 0.3); border: 1px solid rgba(255, 193, 7, 0.6); } 
+            .marker-cluster-medium div { background-color: rgba(255, 193, 7, 0.8); color: #333; }
+            .marker-cluster-large { background-color: rgba(220, 53, 69, 0.3); border: 1px solid rgba(220, 53, 69, 0.6); } 
+            .marker-cluster-large div { background-color: rgba(220, 53, 69, 0.8); color: white; }
         }
+        
         body.dark-mode {
-            --bg-color: #1e2124; 
-            --card-bg: #2d3135;
+            --bg-color: #1a1a2e; 
+            --card-bg: rgba(45, 49, 53, 0.95); 
             --text-color: #f1f1f1;
-            --border-color: #444444;
+            --border-color: #3e4155; 
             --light-text-color: #b0b0b0; 
             --toggle-bg: #555;
-            --toggle-bg-checked: #0b7dda;
+            --toggle-bg-checked: #007bff;
             
-            /* 💡 NEW: Marker Cluster Colors (Dark Mode) */
-            .marker-cluster-small { background-color: rgba(33, 150, 243, 0.4); } /* Blue-ish (Near) */
-            .marker-cluster-small div { background-color: rgba(33, 150, 243, 0.7); color: white; }
-            .marker-cluster-medium { background-color: rgba(255, 193, 7, 0.4); } /* Yellow-ish (Medium) */
-            .marker-cluster-medium div { background-color: rgba(255, 193, 7, 0.7); color: #333; }
-            .marker-cluster-large { background-color: rgba(220, 53, 69, 0.4); } /* Red-ish (Closed) */
-            .marker-cluster-large div { background-color: rgba(220, 53, 69, 0.7); color: white; }
+            .marker-cluster-small { background-color: rgba(0, 123, 255, 0.3); border: 1px solid rgba(0, 123, 255, 0.6); } 
+            .marker-cluster-small div { background-color: rgba(0, 123, 255, 0.8); color: white; }
+            .marker-cluster-medium { background-color: rgba(255, 193, 7, 0.3); border: 1px solid rgba(255, 193, 7, 0.6); } 
+            .marker-cluster-medium div { background-color: rgba(255, 193, 7, 0.8); color: #333; }
+            .marker-cluster-large { background-color: rgba(220, 53, 69, 0.3); border: 1px solid rgba(220, 53, 69, 0.6); } 
+            .marker-cluster-large div { background-color: rgba(220, 53, 69, 0.8); color: white; }
         }
         
         /* 🛠️ CSS Layout */
         html, body {
-            height: 100vh; 
-            margin: 0;
-            padding: 0;
-            font-size: 16px; 
+            height: 100vh; margin: 0; padding: 0; font-size: 16px; 
             font-family: 'Chakra Petch', sans-serif; 
-            background-color: var(--bg-color);
-            color: var(--text-color);
-            transition: background-color 0.3s, color 0.3s;
-            overflow: hidden; 
-            display: flex; 
-            flex-direction: column; 
+            background-color: var(--bg-color); color: var(--text-color);
+            transition: background-color 0.5s, color 0.5s;
+            overflow: hidden; display: flex; flex-direction: column; 
         }
-
-        /* 💡 HEADER */
+        
         .header {
-            display: flex; 
-            flex-direction: column;
-            align-items: flex-start;
-            box-sizing: border-box;
-            background-color: var(--card-bg);
-            padding: 15px 40px; 
-            border-bottom: 1px solid var(--border-color);
-            z-index: 1000; 
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); 
-            transition: background-color 0.3s, color 0.3s, box-shadow 0.3s;
+            display: flex; flex-direction: column; align-items: flex-start;
+            box-sizing: border-box; background-color: var(--card-bg);
+            padding: 10px 40px; border-bottom: 1px solid var(--border-color);
+            z-index: 1000; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1); 
+            transition: background-color 0.5s, color 0.5s, box-shadow 0.5s;
             flex-shrink: 0; 
+            backdrop-filter: blur(5px);
+            -webkit-backdrop-filter: blur(5px); 
         }
 
-        /* [Other Header/Legend/Toggle/Search CSS (unchanged)] */
-        .header-top, .time-display, .mode-toggle-control, .search-control { margin-bottom: var(--header-gap-normal); }
-        .mode-toggle-control { margin-bottom: var(--header-gap-double); display: flex; align-items: center; gap: 25px; }
-        .header h1 { margin: 0; }
-        .legend-bar { width: 100%; height: var(--legend-height-px); display: flex; justify-content: center; align-items: center; gap: 30px; color: var(--text-color); font-size: var(--legend-font-size-desktop); padding: 5px 0 0 0; margin-top: calc(-1 * var(--header-gap-normal)); margin-bottom: 5px; }
+        .header-main-row {
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: var(--header-gap-normal);
+        }
+        
+        .header h1 { margin: 0; font-size: 1.8em; color: var(--toggle-bg-checked); }
+
+        .header-controls-row {
+            width: 100%;
+            display: flex;
+            justify-content: flex-start;
+            align-items: center;
+            gap: 30px; 
+            margin-bottom: var(--header-gap-normal);
+        }
+        
+        .time-display { margin-bottom: 0; font-size: 0.9em; white-space: nowrap; flex-shrink: 0; }
+        .mode-toggle-control { margin-bottom: 0; display: flex; align-items: center; gap: 15px; flex-shrink: 0; }
+        .search-control { margin-bottom: 0; width: 300px; flex-grow: 1; max-width: 400px; }
+        .search-control input { padding: 8px 15px; width: 100%; border: 1px solid var(--border-color); border-radius: 20px; font-family: 'Chakra Petch', sans-serif; background-color: var(--bg-color); color: var(--text-color); transition: all 0.3s; }
+        .search-control input:focus { outline: none; border-color: var(--toggle-bg-checked); box-shadow: 0 0 8px rgba(0, 123, 255, 0.5); background-color: var(--card-bg); }
+        .legend-bar { width: 100%; height: var(--legend-height-px); display: flex; justify-content: center; align-items: center; gap: 30px; color: var(--text-color); font-size: var(--legend-font-size-desktop); padding: 5px 0 0 0; margin-top: calc(-1 * var(--header-gap-normal)); margin-bottom: 0; }
         .legend-item { display: flex; align-items: center; gap: 8px; }
-        .legend-icon { width: 12px; height: 12px; border-radius: 50%; display: inline-block; box-shadow: 0 0 5px rgba(0, 0, 0, 0.2); flex-shrink: 0; }
+        .legend-icon { width: 10px; height: 10px; border-radius: 50%; display: inline-block; box-shadow: 0 0 3px rgba(0, 0, 0, 0.4); flex-shrink: 0; }
         .legend-icon.open-icon { background-color: var(--open-color); }
         .legend-icon.closed-icon { background-color: var(--closed-color); }
         .legend-icon.near-icon { background-color: var(--near-color); }
@@ -99,104 +112,103 @@
         .slider:before { position: absolute; content: ""; height: 18px; width: 18px; left: 3px; bottom: 3px; background-color: white; transition: .4s; border-radius: 50%; }
         input:checked + .slider { background-color: var(--toggle-bg-checked); } 
         input:checked + .slider:before { transform: translateX(26px); }
-        .search-control { margin-bottom: var(--header-gap-normal); width: 100%; }
-        .search-control input { padding: 8px 12px; width: 90%; border: 1px solid var(--border-color); border-radius: 5px; font-family: 'Chakra Petch', sans-serif; background-color: var(--bg-color); color: var(--text-color); transition: all 0.3s; }
-        .search-control input:focus { outline: none; border-color: var(--toggle-bg-checked); box-shadow: 0 0 5px rgba(33, 150, 243, 0.5); }
-
-
-        /* 💡 Map Container */
-        #mapid {
-            flex-grow: 1; 
-            width: 100%;
-            background-color: var(--bg-color); 
-            z-index: 1; 
-            position: relative; 
-        }
         
-        /* 💡 MARKET CLOSED BANNER */
-        .closed-banner {
-            position: absolute; top: 0; left: 0; width: 100%; background-color: #dc3545; color: white;
-            text-align: center; padding: 8px 0; font-weight: 700; z-index: 1000; 
-            transition: opacity 0.3s; display: none; 
-        }
+        #mapid { flex-grow: 1; width: 100%; background-color: var(--bg-color); z-index: 1; position: relative; }
+        .closed-banner { position: absolute; top: 0; left: 0; width: 100%; background-color: rgba(220, 53, 69, 0.9); color: white; text-align: center; padding: 8px 0; font-weight: 700; z-index: 1000; transition: opacity 0.3s; display: none; border-bottom-left-radius: 5px; border-bottom-right-radius: 5px; box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3); }
         .closed-banner.show { display: block; }
-
-        /* 🌟 Z-INDEX FIXES for Leaflet */
         .leaflet-marker-pane { z-index: 900 !important; will-change: transform, opacity; }
-        
-        .market-icon-container {
-            width: 20px !important; height: 20px !important; box-sizing: border-box; 
-            z-index: 900 !important; border: none; cursor: pointer; display: flex;
-            justify-content: center; align-items: center; transform: translate3d(0, 0, 0); 
+        .market-icon-container { width: 18px !important; height: 18px !important; box-sizing: border-box; z-index: 900 !important; border: none; cursor: pointer; display: flex; justify-content: center; align-items: center; transform: translate3d(0, 0, 0); }
+        .market-dot { width: 18px; height: 18px; border-radius: 50%; transition: transform 0.2s; box-shadow: 0 0 5px rgba(0, 0, 0, 0.5); }
+        @keyframes glow-pulse {
+            0% { box-shadow: 0 0 0 0 currentColor, 0 0 5px rgba(0, 0, 0, 0.5); }
+            50% { box-shadow: 0 0 10px 5px rgba(255, 255, 255, 0.5), 0 0 20px 8px rgba(255, 255, 255, 0.2); }
+            100% { box-shadow: 0 0 0 0 currentColor, 0 0 5px rgba(0, 0, 0, 0.5); }
         }
-
-        .market-dot {
-            width: 20px; height: 20px; border-radius: 50%; transition: transform 0.2s; 
-        }
-        
-        .leaflet-marker-icon.market-icon-container { z-index: 900 !important; opacity: 1.0 !important; will-change: transform; }
-
-        /* 💡 HOVER EFFECT KEYFRAMES */
-        @keyframes pulse-float {
-            0% { transform: scale(1.0); box-shadow: 0 0 5px 0 rgba(255, 255, 255, 0.5); }
-            50% { transform: scale(1.1); box-shadow: 0 0 10px 2px rgba(255, 255, 255, 0.8); }
-            100% { transform: scale(1.0); box-shadow: 0 0 5px 0 rgba(255, 255, 255, 0.5); }
-        }
-
-        .leaflet-marker-icon:hover .market-dot { animation: pulse-float 1.2s infinite ease-in-out; cursor: pointer; }
-        
-        /* 💡 Remove Focus Outline */
-        .leaflet-pane a:focus, .leaflet-pane *:focus, .leaflet-container a:focus, .leaflet-container *:focus { outline: none !important; box-shadow: none !important; }
-        
-        /* 💡 Tooltip Styles */
+        .market-icon-container:hover .market-dot { animation: glow-pulse 1.5s infinite ease-in-out; cursor: pointer; }
         .leaflet-tooltip-pane { z-index: 1000 !important; }
-        .leaflet-tooltip { padding: 0; margin: 0; opacity: 0.95 !important; background-color: transparent !important; border: none !important; pointer-events: auto !important; }
+        .leaflet-tooltip { padding: 0; margin: 0; opacity: 0.98 !important; background-color: transparent !important; border: none !important; pointer-events: auto !important; }
         .leaflet-tooltip-pane .market-tooltip-content {
-            font-family: 'Chakra Petch', sans-serif; font-size: 0.9em; background-color: var(--card-bg); 
-            color: var(--text-color); padding: 10px 12px; border-radius: 5px; box-shadow: 0 3px 10px rgba(0, 0, 0, 0.2);
-            border: 1px solid var(--border-color); white-space: nowrap; z-index: 1000; 
+            font-family: 'Chakra Petch', sans-serif; font-size: 0.85em;
+            background-color: var(--card-bg); color: var(--text-color);
+            padding: 12px 15px; border-radius: 10px; box-shadow: 0 5px 20px rgba(0, 0, 0, 0.3);
+            border: 1px solid var(--border-color); max-width: 250px; white-space: normal;
+            line-height: 1.4;
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px); 
         }
         
-        /* 💡 Zoom Control Position */
-        .leaflet-top.leaflet-right { top: auto; padding-top: 10px; }
-        
-        /* 💡 Footer */
         .footer {
             width: 100%; background-color: var(--card-bg); color: var(--text-color);
-            text-align: center; padding: 5px 0; font-size: 0.8em; border-top: 1px solid var(--border-color);
-            z-index: 1000; opacity: 0.8; transition: background-color 0.3s, color 0.3s; flex-shrink: 0; 
+            text-align: center; padding: 5px 0; font-size: 0.75em; border-top: 1px solid var(--border-color);
+            z-index: 1000; opacity: 0.7; transition: background-color 0.5s, color 0.5s; flex-shrink: 0; 
         }
+        
+        /* 💡 Media Query for Mobile (UX/UI Adjustments) */
+        @media (max-width: 768px) {
+            .header { padding: 10px 15px; }
+            
+            .header-main-row {
+                width: 100%;
+                justify-content: space-between; 
+                margin-bottom: var(--header-gap-normal);
+            }
+            
+            .header h1 {
+                 font-size: 1.5em; 
+                 white-space: nowrap; 
+            }
 
-        /* 💡 NEW: Marker Cluster Colors (Light Mode) */
-        .marker-cluster-small { background-color: rgba(33, 150, 243, 0.4); } /* Blue-ish (Near) */
-        .marker-cluster-small div { background-color: rgba(33, 150, 243, 0.7); color: white; }
-        .marker-cluster-medium { background-color: rgba(255, 193, 7, 0.4); } /* Yellow-ish (Medium) */
-        .marker-cluster-medium div { background-color: rgba(255, 193, 7, 0.7); color: #333; }
-        .marker-cluster-large { background-color: rgba(220, 53, 69, 0.4); } /* Red-ish (Closed) */
-        .marker-cluster-large div { background-color: rgba(220, 53, 69, 0.7); color: white; }
+            .header-controls-row { 
+                 flex-direction: column; 
+                 align-items: flex-start;
+                 gap: 10px; 
+            }
+            
+            .search-control { width: 100%; max-width: 100%; }
+            .time-display { order: 1; margin-bottom: 5px;}
+            
+            /* 🚨 FIX: Ensure status text has space and is readable */
+            .mode-toggle-control {
+                gap: 8px; 
+            }
+            
+            .mode-toggle-control span#modeStatusText {
+                font-size: 0.85em; 
+                white-space: nowrap;
+                flex-shrink: 0; 
+            }
+            
+            .legend-bar { gap: 15px; font-size: 0.7em; padding-top: 10px; }
+        }
     </style>
 </head>
-<body class="dark-mode"> 
+<body> 
 
     <div class="header" id="mainHeader">
-        <div class="header-top"><h1>🌎 World Market Map</h1></div>
-        <div class="time-display">
-            🇹🇭 <span id="current-date"></span>, เวลาปัจจุบัน: <span id="current-time"></span>
+        <div class="header-main-row"> 
+            <h1>🌎 World Market Map</h1> 
+            <div class="mode-toggle-control">
+                <span id="modeStatusText">☀️ โหมดสว่าง</span>
+                <label class="toggle-switch">
+                    <input type="checkbox" id="darkModeToggle"> 
+                    <span class="slider"></span>
+                </label>
+            </div>
         </div>
-        <div class="mode-toggle-control">
-            <span id="modeStatusText">🌙 โหมดมืด</span>
-            <label class="toggle-switch">
-                <input type="checkbox" id="darkModeToggle" checked> 
-                <span class="slider"></span>
-            </label>
+        
+        <div class="header-controls-row">
+            <div class="time-display">
+                🇹🇭 <span id="current-date"></span>, เวลาปัจจุบัน: <span id="current-time"></span>
+            </div>
+            <div class="search-control">
+                 <input type="text" id="marketSearch" placeholder="ค้นหาตลาดหุ้น (เช่น Tokyo, NYSE)...">
+            </div>
         </div>
-        <div class="search-control">
-             <input type="text" id="marketSearch" placeholder="ค้นหาตลาดหุ้น (เช่น Tokyo, NYSE)...">
-        </div>
+        
         <div class="legend-bar">
-            <div class="legend-item"><div class="legend-icon open-icon"></div><span>**สีเขียว**: เปิดทำการ (Open)</span></div>
-            <div class="legend-item"><div class="legend-icon closed-icon"></div><span>**สีแดง**: ปิดทำการ (Closed)</span></div>
-            <div class="legend-item"><div class="legend-icon near-icon"></div><span>**สีเหลือง**: ใกล้เปิด/ปิด หรือพักกลางวัน (Near/Break)</span></div>
+            <div class="legend-item"><div class="legend-icon open-icon"></div><span>**สีเขียว**: เปิดทำการ</span></div>
+            <div class="legend-item"><div class="legend-icon closed-icon"></div><span>**สีแดง**: ปิดทำการ</span></div>
+            <div class="legend-item"><div class="legend-icon near-icon"></div><span>**สีเหลือง**: ใกล้เปิด/ปิด</span></div>
         </div>
     </div>
     
@@ -207,22 +219,18 @@
     </div>
 
     <div class="footer">
-        2025 Copyright/Developer by thetylerlab | Version 7.1 (Marker Clustering)
+        2025 Copyright/Developer by thetylerlab | Version 7.5 (Status Text Fix)
     </div>
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    
     <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
-    
     <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.1/moment.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/moment-timezone/0.5.33/moment-timezone-with-data-10-year-range.min.js"></script>
         
     <script>
-        // 💡 ตั้งค่า Path สำหรับ Default Leaflet Icons
+        // [Unchanged JavaScript Code]
         delete L.Icon.Default.prototype._getIconUrl; 
         
-        // --- 1. MARKET DATA (INCLUDING HOLIDAYS) ---
-        // Holidays must be in YYYY-MM-DD format (ISO 8601)
         const marketHolidays = {
             'SET': ['2025-10-23', '2025-12-05', '2025-12-10'], 
             'NYSE': ['2025-01-01', '2025-01-20', '2025-05-26'], 
@@ -230,7 +238,6 @@
         };
         
         const markets = [
-            // === เอเชีย/แปซิฟิก ===
             { id: 'SET', name: 'Bangkok (ไทย)', exchange: 'SET', lat: 13.7563, lon: 100.5018, open: '10:00', close: '16:30', breakStart: '12:30', breakEnd: '14:00', dst: false, timezone: 'Asia/Bangkok' },
             { id: 'TSE', name: 'Tokyo (JP)', exchange: 'TSE (Nikkei 225)', lat: 35.6895, lon: 139.6917, open: '09:00', close: '15:00', breakStart: '11:30', breakEnd: '12:30', dst: false, timezone: 'Asia/Tokyo' }, 
             { id: 'KSE', name: 'Seoul (KR)', exchange: 'KSE (KOSPI)', lat: 37.5665, lon: 126.9780, open: '09:00', close: '15:30', breakStart: '', breakEnd: '', dst: false, timezone: 'Asia/Seoul' }, 
@@ -239,21 +246,15 @@
             { id: 'ASX', name: 'Sydney (AU)', exchange: 'ASX', lat: -33.8688, lon: 151.2093, open: '10:00', close: '16:00', breakStart: '', breakEnd: '', dst: true, timezone: 'Australia/Sydney' }, 
             { id: 'BSE', name: 'Mumbai (IN)', exchange: 'BSE (Sensex)', lat: 18.9750, lon: 72.8258, open: '09:15', close: '15:30', breakStart: '', breakEnd: '', dst: false, timezone: 'Asia/Kolkata' },
             { id: 'IDX', name: 'Jakarta (ID)', exchange: 'IDX', lat: -6.1754, lon: 106.8272, open: '09:00', close: '16:00', breakStart: '12:00', breakEnd: '13:30', dst: false, timezone: 'Asia/Jakarta' },
-            
-            // === ยุโรป/ตะวันออกกลาง/แอฟริกา ===
             { id: 'LSE', name: 'London (UK)', exchange: 'LSE (FTSE 100)', lat: 51.5074, lon: 0.1278, open: '08:00', close: '16:30', breakStart: '', breakEnd: '', dst: true, timezone: 'Europe/London' },
             { id: 'XETRA', name: 'Frankfurt (DE)', exchange: 'XETRA (DAX)', lat: 50.1109, lon: 8.6821, open: '09:00', close: '17:30', breakStart: '', breakEnd: '', dst: true, timezone: 'Europe/Berlin' },
             { id: 'JSE', name: 'Johannesburg (ZA)', exchange: 'JSE', lat: -26.2041, lon: 28.0473, open: '09:00', close: '17:00', breakStart: '', breakEnd: '', dst: false, timezone: 'Africa/Johannesburg' },
             { id: 'TASE', name: 'Tel Aviv (IL)', exchange: 'TASE (TA-35)', lat: 32.0853, lon: 34.7818, open: '09:45', close: '16:30', breakStart: '', breakEnd: '', dst: true, timezone: 'Asia/Jerusalem' }, 
             { id: 'TADAWUL', name: 'Riyadh (SA)', exchange: 'Tadawul', lat: 24.7136, lon: 46.6069, open: '10:00', close: '15:00', breakStart: '', breakEnd: '', dst: false, timezone: 'Asia/Riyadh' },
-            
-            // === อเมริกาเหนือ/ใต้ ===
             { id: 'NYSE', name: 'New York (US)', exchange: 'NYSE / NASDAQ', lat: 40.7128, lon: -74.0060, open: '09:30', close: '16:00', breakStart: '', breakEnd: '', dst: true, timezone: 'America/New_York' },
             { id: 'TSX', name: 'Toronto (CA)', exchange: 'TSX', lat: 43.6532, lon: -79.3832, open: '09:30', close: '16:00', breakStart: '', breakEnd: '', dst: true, timezone: 'America/Toronto' },
             { id: 'BMV', name: 'Mexico City (MX)', exchange: 'BMV', lat: 19.4326, lon: -99.1332, open: '08:30', close: '15:00', breakStart: '', breakEnd: '', dst: true, timezone: 'America/Mexico_City' }, 
             { id: 'B3', name: 'São Paulo (BR)', exchange: 'B3 (Ibovespa)', lat: -23.5505, lon: -46.6333, open: '10:00', close: '17:00', breakStart: '', breakEnd: '', dst: true, timezone: 'America/Sao_Paulo' }, 
-            
-            // 💡 เพิ่มตลาดอื่นๆ เพื่อให้เห็น Marker Clustering ชัดเจน
             { id: 'MOEX', name: 'Moscow (RU)', exchange: 'MOEX', lat: 55.7558, lon: 37.6173, open: '09:50', close: '18:50', breakStart: '', breakEnd: '', dst: false, timezone: 'Europe/Moscow' },
             { id: 'EURONEXT', name: 'Paris (FR)', exchange: 'Euronext', lat: 48.8566, lon: 2.3522, open: '09:00', close: '17:30', breakStart: '', breakEnd: '', dst: true, timezone: 'Europe/Paris' },
             { id: 'SIX', name: 'Zurich (CH)', exchange: 'SIX', lat: 47.3769, lon: 8.5417, open: '09:00', close: '17:30', breakStart: '', breakEnd: '', dst: true, timezone: 'Europe/Zurich' },
@@ -263,11 +264,8 @@
         let currentTileLayer;
         const marketMarkers = {};
         let stickyTooltip = null; 
-        
-        // 💡 NEW: Marker Cluster Group
         let markerClusterGroup; 
 
-        // --- ฟังก์ชัน Time Calculation (Unchanged from 7.0) ---
         function formatTimeDiff(diffMs) { 
             if (diffMs < 0) return '00:00:00';
             const totalSeconds = Math.floor(diffMs / 1000);
@@ -296,7 +294,6 @@
             let diffMs;
             let nextOpen = null; 
 
-            // 1. ตรวจสอบวันหยุดนักขัตฤกษ์
             const holidays = marketHolidays[market.id] || [];
             const isHoliday = holidays.includes(todayDateStr);
             
@@ -320,8 +317,6 @@
                 };
             }
 
-
-            // 2. ตรวจสอบวันหยุดสุดสัปดาห์
             if (dayOfWeek === 0 || dayOfWeek === 6) { 
                 nextOpen = nowInMarketZone.clone().day(dayOfWeek === 0 ? 1 : 8); 
                 while (nextOpen.day() === 0 || nextOpen.day() === 6 || holidays.includes(nextOpen.format('YYYY-MM-DD'))) {
@@ -342,13 +337,11 @@
                 };
             }
 
-            // 3. กำหนดเวลา Open/Close/Break 
             let openTime = nowInMarketZone.clone().set({ hour: parseInt(openTimeStr.split(':')[0]), minute: parseInt(openTimeStr.split(':')[1]), second: 0, millisecond: 0 });
             let closeTime = nowInMarketZone.clone().set({ hour: parseInt(closeTimeStr.split(':')[0]), minute: parseInt(closeTimeStr.split(':')[1]), second: 0, millisecond: 0 });
             let breakStart = breakStartStr ? nowInMarketZone.clone().set({ hour: parseInt(breakStartStr.split(':')[0]), minute: parseInt(breakStartStr.split(':')[1]), second: 0, millisecond: 0 }) : null;
             let breakEnd = breakEndStr ? nowInMarketZone.clone().set({ hour: parseInt(breakEndStr.split(':')[0]), minute: parseInt(breakEndStr.split(':')[1]), second: 0, millisecond: 0 }) : null;
 
-            // 4. การจัดการตลาดข้ามเที่ยงคืน
             if (openTime.isAfter(closeTime)) { 
                 if (nowInMarketZone.isBefore(closeTime)) { openTime.subtract(1, 'day'); } else { closeTime.add(1, 'day'); }
             } else {
@@ -364,12 +357,10 @@
                 }
             }
             
-            // 5. จัดการเวลาพักกลางวัน 
             if (breakStart && breakEnd && breakStart.isAfter(breakEnd)) {
                  if (nowInMarketZone.isBefore(breakEnd)) { breakStart.subtract(1, 'day'); } else { breakEnd.add(1, 'day'); }
             }
             
-            // 6. กำหนดสถานะ
             const isDuringBreak = breakStart && breakEnd && nowInMarketZone.isBetween(breakStart, breakEnd, null, '[]');
             const isOpen = nowInMarketZone.isBetween(openTime, closeTime, null, '[]') && !isDuringBreak;
             
@@ -400,7 +391,6 @@
                 }
             }
 
-            // 7. กำหนดสถานะ NEAR (ภายใน 15 นาที)
             const fifteenMinutes = moment.duration(15, 'minutes');
             if (!isOpen && nextEventTime.diff(nowInMarketZone) <= fifteenMinutes.asMilliseconds() && nextEventTime.diff(nowInMarketZone) > 0) {
                  status = '🔔 ใกล้เปิดแล้ว';
@@ -410,7 +400,6 @@
                 statusClass = 'near';
             }
             
-            // 8. สร้าง Trading Hours
             let tradingHours = `${market.open} – ${market.close} น. (${nowInMarketZone.zoneAbbr()})`;
             if (market.breakStart) tradingHours += ` (พัก ${market.breakStart} – ${market.breakEnd} น.)`;
             if (market.dst) tradingHours += ` [${nowInMarketZone.isDST() ? 'DST' : 'Standard Time'}]`;
@@ -420,10 +409,8 @@
             return { status, countdownText, statusClass, tradingHours: tradingHours, localTime: localTimeStr, isClosed: statusClass === 'closed' };
         }
 
-        // --- 2. MAP INITIALIZATION AND CONTROLS ---
-        function determineInitialView() {
-            return { lat: 13.7563, lon: 100.5018, zoom: 2 }; 
-        }
+
+        function determineInitialView() { return { lat: 13.7563, lon: 100.5018, zoom: 2 }; }
 
         function setZoomControlPosition() {
             const header = document.getElementById('mainHeader');
@@ -439,24 +426,19 @@
              const initialView = determineInitialView();
 
              mymap = L.map('mapid', {
-                center: [initialView.lat, initialView.lon], 
-                zoom: initialView.zoom, 
-                zoomControl: true, 
-                maxZoom: 10, 
-                minZoom: 1, 
-                worldCopyJump: true, 
-                dragging: true, 
+                center: [initialView.lat, initialView.lon], zoom: initialView.zoom, zoomControl: true, 
+                maxZoom: 10, minZoom: 1, worldCopyJump: true, dragging: true, 
              }); 
              
-             // 💡 NEW: Initialize Marker Cluster Group
              markerClusterGroup = L.markerClusterGroup({
-                maxClusterRadius: 80, // ลดขนาด Cluster Radius เล็กน้อย
-                disableClusteringAtZoom: 5, // ปิด Cluster เมื่อ Zoom >= 5
+                maxClusterRadius: 70, 
+                disableClusteringAtZoom: 5, 
                 chunkedLoading: true
              }).addTo(mymap);
 
              mymap.zoomControl.setPosition('topright'); 
-             setMapTileLayer(document.body.classList.contains('dark-mode'));
+             
+             setMapTileLayer(document.body.classList.contains('dark-mode')); 
              
              setTimeout(() => {
                  mymap.invalidateSize(true); 
@@ -465,7 +447,7 @@
              
              setZoomControlPosition();
 
-             updateDashboardMap(true); // Pass true to force redraw all markers
+             updateDashboardMap(true); 
              setInterval(() => updateDashboardMap(false), 1000); 
 
              mymap.on('click', function(e) {
@@ -477,7 +459,6 @@
                             break;
                         }
                     }
-                    
                     if (markerToUnstick) {
                         markerToUnstick.closeTooltip();
                         stickyTooltip = null;
@@ -492,9 +473,7 @@
             const tileUrl = isDarkMode ? darkMapTile : lightMapTile;
             const modeText = document.getElementById('modeStatusText');
             
-            if (currentTileLayer) {
-                mymap.removeLayer(currentTileLayer);
-            }
+            if (currentTileLayer) { mymap.removeLayer(currentTileLayer); }
             
             currentTileLayer = L.tileLayer(tileUrl, {
                 maxZoom: 18,
@@ -508,9 +487,7 @@
             }
         }
         
-        // --- 3. MARKET MARKER AND UPDATE LOGIC ---
-        // 💡 MODIFIED: Accepts forceRedraw argument for Marker Cluster logic
-        function updateDashboardMap(forceRedraw = false) {
+        function updateDashboardMap(forceRedraw = false) { 
             if (!mymap) return;
 
             const now = new Date();
@@ -529,9 +506,7 @@
             markets.forEach(market => {
                 const statusData = getMarketStatus(market); 
 
-                if (statusData.statusClass !== 'closed') {
-                    allMarketsClosed = false; 
-                }
+                if (statusData.statusClass !== 'closed') { allMarketsClosed = false; }
 
                 const markerId = market.id;
                 const currentStatusClass = statusData.statusClass;
@@ -543,10 +518,11 @@
                 
                 const tooltipContent = `
                     <div class="market-tooltip-content">
-                        <span style="font-weight: 700;">${market.name}</span> (${market.exchange})<br>
-                        สถานะ: <span style="font-weight: 700; color: ${statusColorHex}">${statusData.status}</span><br>
+                        <span style="font-weight: 700; font-size: 1.1em;">${market.name}</span><br>
+                        <span style="color: ${statusColorHex}; font-weight: 700;">${statusData.status}</span><br>
                         ${statusData.countdownText}<br>
-                        **เวลาท้องถิ่น:** ${statusData.localTime}<br>
+                        <hr style="border: none; border-top: 1px solid var(--border-color); margin: 5px 0;">
+                        **เวลาท้องถิ่น:** <span style="font-weight: 500;">${statusData.localTime}</span><br>
                         **เวลาทำการ:** ${statusData.tradingHours}
                     </div>
                 `;
@@ -554,19 +530,17 @@
                 const tooltipDirection = 'right';
                 const tooltipOffset = L.point(10, 0); 
 
-                // 1. ตรวจสอบและสร้าง Marker ครั้งแรก (หรือหากต้องการ Redraw)
                 if (forceRedraw || !marketMarkers[markerId]) {
                     if (marketMarkers[markerId]) {
-                         // Remove existing marker before re-creating
                          markerClusterGroup.removeLayer(marketMarkers[markerId]);
                          delete marketMarkers[markerId];
                     }
                     
                     const marketIcon = L.divIcon({
                         className: 'market-icon-container', 
-                        html: `<div class="market-dot" style="background-color: ${statusColorVar};"></div>`, 
-                        iconSize: [20, 20], 
-                        iconAnchor: [10, 10] 
+                        html: `<div class="market-dot" style="background-color: ${statusColorVar}; color: ${statusColorVar};"></div>`, 
+                        iconSize: [18, 18], 
+                        iconAnchor: [9, 9] 
                     });
 
                     const marker = L.marker([market.lat, market.lon], { 
@@ -574,18 +548,12 @@
                         bubblingMouseEvents: false 
                     });
                     
-                    // 💡 NEW: Add marker to the cluster group instead of map
                     markerClusterGroup.addLayer(marker);
                     marketMarkers[markerId] = marker;
                     
-                    // 2. ผูก Tooltip (Events need to be re-added)
-                     marker.bindTooltip(tooltipContent, {
-                        permanent: false, 
-                        direction: tooltipDirection, 
-                        offset: tooltipOffset,
-                        sticky: false, 
-                        interactive: false, 
-                        className: 'market-tooltip',
+                    marker.bindTooltip(tooltipContent, {
+                        permanent: false, direction: tooltipDirection, offset: tooltipOffset,
+                        sticky: false, interactive: false, className: 'market-tooltip',
                     });
                     
                     marker.on('mouseover', function (e) {
@@ -621,7 +589,6 @@
 
 
                 } else {
-                    // 3. อัปเดต Marker ที่มีอยู่แล้ว (อัปเดตสีและเนื้อหา Tooltip เท่านั้น)
                     const marker = marketMarkers[markerId];
                     const markerElement = marker.getElement(); 
 
@@ -629,6 +596,7 @@
                         const dotElement = markerElement.querySelector('.market-dot');
                         if (dotElement) {
                             dotElement.style.backgroundColor = statusColorVar;
+                            dotElement.style.color = statusColorVar; 
                         }
                     }
 
@@ -644,7 +612,6 @@
                 }
             });
             
-            // 💡 LOGIC FOR CLOSED BANNER 
             if (allMarketsClosed) {
                 closedBanner.classList.add('show');
             } else {
@@ -652,7 +619,6 @@
             }
         }
         
-        // --- 4. SEARCH FUNCTIONALITY (Unchanged from 7.0) ---
         function setupSearchFunctionality() {
             const searchInput = document.getElementById('marketSearch');
             
@@ -669,7 +635,6 @@
                     if (foundMarket) {
                         const marker = marketMarkers[foundMarket.id];
                         
-                        // 💡 NEW: Pan/Zoom to the marker location and spiderfy if necessary
                         if (markerClusterGroup && marker) {
                             markerClusterGroup.zoomToShowLayer(marker, function () {
                                 mymap.setView([foundMarket.lat, foundMarket.lon], 5, { animation: true }); 
@@ -678,7 +643,6 @@
                              mymap.setView([foundMarket.lat, foundMarket.lon], 5, { animation: true }); 
                         }
                         
-                        // 2. บังคับเปิด Sticky Tooltip
                         if (marker) {
                             if (stickyTooltip) {
                                 let prevMarker = null;
@@ -712,7 +676,6 @@
                 }
             });
         }
-
 
         window.addEventListener('resize', () => {
              if (mymap) {

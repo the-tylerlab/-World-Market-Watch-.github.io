@@ -2,7 +2,7 @@
 <html lang="th">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0"> 
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"> 
     <title>World Market Map - แผนที่ตลาดหุ้นโลก</title>
 
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
@@ -68,7 +68,9 @@
         .header {
             display: flex; flex-direction: column; align-items: flex-start;
             box-sizing: border-box; background-color: var(--card-bg);
-            padding: 10px 40px; border-bottom: 1px solid var(--border-color);
+            /* Default Desktop Padding */
+            padding: 10px 40px; 
+            border-bottom: 1px solid var(--border-color);
             z-index: 1000; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1); 
             transition: background-color 0.5s, color 0.5s, box-shadow 0.5s;
             flex-shrink: 0; 
@@ -100,7 +102,21 @@
         .search-control { margin-bottom: 0; width: 300px; flex-grow: 1; max-width: 400px; }
         .search-control input { padding: 8px 15px; width: 100%; border: 1px solid var(--border-color); border-radius: 20px; font-family: 'Chakra Petch', sans-serif; background-color: var(--bg-color); color: var(--text-color); transition: all 0.3s; }
         .search-control input:focus { outline: none; border-color: var(--toggle-bg-checked); box-shadow: 0 0 8px rgba(0, 123, 255, 0.5); background-color: var(--card-bg); }
-        .legend-bar { width: 100%; height: var(--legend-height-px); display: flex; justify-content: center; align-items: center; gap: 30px; color: var(--text-color); font-size: var(--legend-font-size-desktop); padding: 5px 0 0 0; margin-top: calc(-1 * var(--header-gap-normal)); margin-bottom: 0; }
+        
+        /* LEGEND BAR (Desktop) */
+        .legend-bar { 
+            width: 100%; 
+            height: var(--legend-height-px); 
+            display: flex; 
+            justify-content: center; 
+            align-items: center; 
+            gap: 30px; 
+            color: var(--text-color); 
+            font-size: var(--legend-font-size-desktop); 
+            padding: 5px 0 0 0; 
+            margin-top: calc(-1 * var(--header-gap-normal)); 
+            margin-bottom: 0; 
+        }
         .legend-item { display: flex; align-items: center; gap: 8px; }
         .legend-icon { width: 10px; height: 10px; border-radius: 50%; display: inline-block; box-shadow: 0 0 3px rgba(0, 0, 0, 0.4); flex-shrink: 0; }
         .legend-icon.open-icon { background-color: var(--open-color); }
@@ -127,14 +143,38 @@
         .market-icon-container:hover .market-dot { animation: glow-pulse 1.5s infinite ease-in-out; cursor: pointer; }
         .leaflet-tooltip-pane { z-index: 1000 !important; }
         .leaflet-tooltip { padding: 0; margin: 0; opacity: 0.98 !important; background-color: transparent !important; border: none !important; pointer-events: auto !important; }
+        
+        /* Tooltip Content (Horizontal Rectangle Look) */
         .leaflet-tooltip-pane .market-tooltip-content {
             font-family: 'Chakra Petch', sans-serif; font-size: 0.85em;
             background-color: var(--card-bg); color: var(--text-color);
             padding: 12px 15px; border-radius: 10px; box-shadow: 0 5px 20px rgba(0, 0, 0, 0.3);
-            border: 1px solid var(--border-color); max-width: 250px; white-space: normal;
+            border: 1px solid var(--border-color); 
+            max-width: 350px; 
+            min-width: 250px; 
+            white-space: normal;
             line-height: 1.4;
             backdrop-filter: blur(8px);
             -webkit-backdrop-filter: blur(8px); 
+        }
+
+        /* Flexbox สำหรับบรรทัดสถานะ/เวลาท้องถิ่น */
+        .tooltip-status-line {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 5px; 
+            gap: 10px; 
+        }
+        
+        .tooltip-time-info {
+            font-size: 0.8em;
+            opacity: 0.9;
+            text-align: right;
+            white-space: nowrap; 
+        }
+        .tooltip-time-info strong {
+            font-weight: 500;
         }
         
         .footer {
@@ -145,7 +185,19 @@
         
         /* 💡 Media Query for Mobile (UX/UI Adjustments) */
         @media (max-width: 768px) {
-            .header { padding: 10px 15px; }
+            /* 🚨 FINAL FIX: Force Safe Area Padding for Dynamic Island/Notch devices (Version 7.12) */
+            .header { 
+                 /* กำหนดค่า padding พื้นฐานเผื่อกรณีที่ env() ไม่ทำงาน */
+                 padding-top: 25px !important; 
+                 
+                 /* บังคับใช้ค่า Safe Area (รวม padding เดิม 10px + ค่า safe area) */
+                 padding-top: calc(env(safe-area-inset-top) + 10px) !important; 
+                 
+                 padding-bottom: 10px; 
+                 /* บังคับใช้ค่าด้านข้างสำหรับแนวนอน */
+                 padding-left: calc(env(safe-area-inset-left) + 15px) !important;
+                 padding-right: calc(env(safe-area-inset-right) + 15px) !important;
+            }
             
             .header-main-row {
                 width: 100%;
@@ -167,7 +219,6 @@
             .search-control { width: 100%; max-width: 100%; }
             .time-display { order: 1; margin-bottom: 5px;}
             
-            /* 🚨 FIX: Ensure status text has space and is readable */
             .mode-toggle-control {
                 gap: 8px; 
             }
@@ -178,7 +229,20 @@
                 flex-shrink: 0; 
             }
             
-            .legend-bar { gap: 15px; font-size: 0.7em; padding-top: 10px; }
+            /* Legend Bar */
+            .legend-bar { 
+                justify-content: flex-start; 
+                gap: 10px 25px; 
+                font-size: 0.75em; 
+                padding: 10px 20px 10px 20px; 
+                margin-top: 0; 
+                height: auto; 
+                flex-wrap: wrap; 
+                box-sizing: border-box; 
+            }
+            .legend-item {
+                 flex-shrink: 0; 
+            }
         }
     </style>
 </head>
@@ -219,7 +283,7 @@
     </div>
 
     <div class="footer">
-        2025 Copyright/Developer by thetylerlab | Version 7.5 (Status Text Fix)
+        2025 Copyright/Developer by thetylerlab | Version 7.12 (Final Notch/Safe-Area Force Fix)
     </div>
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -228,7 +292,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/moment-timezone/0.5.33/moment-timezone-with-data-10-year-range.min.js"></script>
         
     <script>
-        // [Unchanged JavaScript Code]
+        // [JavaScript Code - Unchanged logic]
         delete L.Icon.Default.prototype._getIconUrl; 
         
         const marketHolidays = {
@@ -414,11 +478,13 @@
 
         function setZoomControlPosition() {
             const header = document.getElementById('mainHeader');
-            const headerHeight = header.offsetHeight;
+            // header.offsetHeight จะรวม padding ที่มาจาก safe-area-inset-top แล้ว
+            const headerHeight = header.offsetHeight; 
             const zoomControl = document.querySelector('.leaflet-top.leaflet-right');
             
             if (zoomControl) {
-                zoomControl.style.top = `${headerHeight + 10}px`; 
+                // 💡 ใช้ความสูง Header ที่ปรับ Safe Area แล้ว + 30px
+                zoomControl.style.top = `${headerHeight + 30}px`; 
             }
         }
 
@@ -440,6 +506,7 @@
              
              setMapTileLayer(document.body.classList.contains('dark-mode')); 
              
+             // หน่วงเวลาเล็กน้อยเพื่อให้ CSS Render ก่อนคำนวณความสูง Header
              setTimeout(() => {
                  mymap.invalidateSize(true); 
                  setZoomControlPosition();
@@ -516,14 +583,25 @@
                 else if (currentStatusClass === 'closed') { statusColorVar = 'var(--closed-color)'; statusColorHex = '#dc3545'; }
                 else { statusColorVar = 'var(--near-color)'; statusColorHex = '#ffc107'; }
                 
+                // Tooltip Content for Horizontal Rectangle Readability
                 const tooltipContent = `
                     <div class="market-tooltip-content">
-                        <span style="font-weight: 700; font-size: 1.1em;">${market.name}</span><br>
-                        <span style="color: ${statusColorHex}; font-weight: 700;">${statusData.status}</span><br>
-                        ${statusData.countdownText}<br>
-                        <hr style="border: none; border-top: 1px solid var(--border-color); margin: 5px 0;">
-                        **เวลาท้องถิ่น:** <span style="font-weight: 500;">${statusData.localTime}</span><br>
-                        **เวลาทำการ:** ${statusData.tradingHours}
+                        <div style="font-weight: 700; font-size: 1.1em; color: var(--toggle-bg-checked); margin-bottom: 5px;">${market.name}</div>
+                        
+                        <div class="tooltip-status-line">
+                            <span style="color: ${statusColorHex}; font-weight: 700; white-space: nowrap;">${statusData.status}</span>
+                            <span class="tooltip-time-info">
+                                **เวลาท้องถิ่น:** <strong>${statusData.localTime}</strong>
+                            </span>
+                        </div>
+                        
+                        <div>${statusData.countdownText}</div>
+                        
+                        <hr style="border: none; border-top: 1px solid var(--border-color); margin: 8px 0;">
+                        
+                        <div class="tooltip-time-info" style="text-align: left; opacity: 1; font-size: 0.85em;">
+                            **เวลาทำการ:** ${statusData.tradingHours}
+                        </div>
                     </div>
                 `;
                 

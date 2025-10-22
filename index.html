@@ -6,6 +6,9 @@
     <title>World Market Map - แผนที่ตลาดหุ้นโลก</title>
 
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+    
+    <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css" />
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -40,9 +43,17 @@
             --light-text-color: #b0b0b0; 
             --toggle-bg: #555;
             --toggle-bg-checked: #0b7dda;
+            
+            /* 💡 NEW: Marker Cluster Colors (Dark Mode) */
+            .marker-cluster-small { background-color: rgba(33, 150, 243, 0.4); } /* Blue-ish (Near) */
+            .marker-cluster-small div { background-color: rgba(33, 150, 243, 0.7); color: white; }
+            .marker-cluster-medium { background-color: rgba(255, 193, 7, 0.4); } /* Yellow-ish (Medium) */
+            .marker-cluster-medium div { background-color: rgba(255, 193, 7, 0.7); color: #333; }
+            .marker-cluster-large { background-color: rgba(220, 53, 69, 0.4); } /* Red-ish (Closed) */
+            .marker-cluster-large div { background-color: rgba(220, 53, 69, 0.7); color: white; }
         }
         
-        /* 🛠️ CSS Layout (Flexbox Container for full height) */
+        /* 🛠️ CSS Layout */
         html, body {
             height: 100vh; 
             margin: 0;
@@ -72,80 +83,25 @@
             flex-shrink: 0; 
         }
 
-        /* 💡 Spacing */
-        .header-top, .time-display, .mode-toggle-control {
-            margin-bottom: var(--header-gap-normal); 
-        }
-        
-        /* 🚨 V6.5 FIX: เพิ่มระยะห่างระหว่างข้อความกับ Toggle Switch */
-        .mode-toggle-control {
-            margin-bottom: var(--header-gap-double); 
-            display: flex; 
-            align-items: center;
-            /* คงค่า 25px ตามที่แก้ไขล่าสุด */
-            gap: 25px; 
-        }
-
-        .header h1 {
-            margin: 0;
-        }
-
-
-        /* 💡 Legend Bar & Icon */
-        .legend-bar {
-            width: 100%;
-            height: var(--legend-height-px);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            gap: 30px;
-            color: var(--text-color);
-            font-size: var(--legend-font-size-desktop); 
-            padding: 5px 0 0 0; 
-            margin-top: calc(-1 * var(--header-gap-normal)); 
-            margin-bottom: 5px; 
-        }
-        
-        .legend-item {
-            display: flex;
-            align-items: center;
-            gap: 8px; 
-        }
-
-        /* 🔴 วงกลมสำหรับ Legend */
-        .legend-icon {
-            width: 12px; 
-            height: 12px;
-            border-radius: 50%; 
-            display: inline-block;
-            box-shadow: 0 0 5px rgba(0, 0, 0, 0.2); 
-            flex-shrink: 0; 
-        }
-        
+        /* [Other Header/Legend/Toggle/Search CSS (unchanged)] */
+        .header-top, .time-display, .mode-toggle-control, .search-control { margin-bottom: var(--header-gap-normal); }
+        .mode-toggle-control { margin-bottom: var(--header-gap-double); display: flex; align-items: center; gap: 25px; }
+        .header h1 { margin: 0; }
+        .legend-bar { width: 100%; height: var(--legend-height-px); display: flex; justify-content: center; align-items: center; gap: 30px; color: var(--text-color); font-size: var(--legend-font-size-desktop); padding: 5px 0 0 0; margin-top: calc(-1 * var(--header-gap-normal)); margin-bottom: 5px; }
+        .legend-item { display: flex; align-items: center; gap: 8px; }
+        .legend-icon { width: 12px; height: 12px; border-radius: 50%; display: inline-block; box-shadow: 0 0 5px rgba(0, 0, 0, 0.2); flex-shrink: 0; }
         .legend-icon.open-icon { background-color: var(--open-color); }
         .legend-icon.closed-icon { background-color: var(--closed-color); }
         .legend-icon.near-icon { background-color: var(--near-color); }
-
-
-        /* 💡 Toggle Switch CSS (V6.6 FIX: แก้ไขเพื่อให้สีและตำแหน่งทำงานถูกต้อง) */
-        .toggle-switch {
-            position: relative;
-            display: inline-block;
-            width: 50px; 
-            height: 24px;
-        }
+        .toggle-switch { position: relative; display: inline-block; width: 50px; height: 24px; }
         .toggle-switch input { opacity: 0; width: 0; height: 0; }
-        .slider {
-            position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0;
-            background-color: var(--toggle-bg); transition: .4s; border-radius: 24px;
-        }
-        .slider:before {
-            position: absolute; content: ""; height: 18px; width: 18px; left: 3px;
-            bottom: 3px; background-color: white; transition: .4s; border-radius: 50%;
-        }
-        /* 🚨 FIX: เพิ่ม background-color และ transform ที่ถูกต้อง */
+        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: var(--toggle-bg); transition: .4s; border-radius: 24px; }
+        .slider:before { position: absolute; content: ""; height: 18px; width: 18px; left: 3px; bottom: 3px; background-color: white; transition: .4s; border-radius: 50%; }
         input:checked + .slider { background-color: var(--toggle-bg-checked); } 
         input:checked + .slider:before { transform: translateX(26px); }
+        .search-control { margin-bottom: var(--header-gap-normal); width: 100%; }
+        .search-control input { padding: 8px 12px; width: 90%; border: 1px solid var(--border-color); border-radius: 5px; font-family: 'Chakra Petch', sans-serif; background-color: var(--bg-color); color: var(--text-color); transition: all 0.3s; }
+        .search-control input:focus { outline: none; border-color: var(--toggle-bg-checked); box-shadow: 0 0 5px rgba(33, 150, 243, 0.5); }
 
 
         /* 💡 Map Container */
@@ -159,171 +115,74 @@
         
         /* 💡 MARKET CLOSED BANNER */
         .closed-banner {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            background-color: #dc3545; /* Red */
-            color: white;
-            text-align: center;
-            padding: 8px 0;
-            font-weight: 700;
-            z-index: 1000; 
-            transition: opacity 0.3s;
-            display: none; 
+            position: absolute; top: 0; left: 0; width: 100%; background-color: #dc3545; color: white;
+            text-align: center; padding: 8px 0; font-weight: 700; z-index: 1000; 
+            transition: opacity 0.3s; display: none; 
         }
-        .closed-banner.show {
-            display: block;
-        }
+        .closed-banner.show { display: block; }
 
-        /* 🌟 FIX: บังคับ Z-INDEX ของ Marker Pane ให้อยู่เหนือทุกสิ่งในแผนที่ (V5.7) */
-        .leaflet-marker-pane {
-             z-index: 900 !important; 
-             /* CRITICAL FIX: บอกเบราว์เซอร์ให้เตรียม Transform */
-             will-change: transform, opacity; 
-        }
+        /* 🌟 Z-INDEX FIXES for Leaflet */
+        .leaflet-marker-pane { z-index: 900 !important; will-change: transform, opacity; }
         
-        /* 💡 Marker Icon (The Container of the Dot) */
         .market-icon-container {
-            width: 20px !important; 
-            height: 20px !important;
-            box-sizing: border-box; 
-            z-index: 900 !important; 
-            border: none; 
-            cursor: pointer; 
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            /* CRITICAL FIX: บังคับ Hardware Acceleration สำหรับ Marker Element */
-            transform: translate3d(0, 0, 0); 
+            width: 20px !important; height: 20px !important; box-sizing: border-box; 
+            z-index: 900 !important; border: none; cursor: pointer; display: flex;
+            justify-content: center; align-items: center; transform: translate3d(0, 0, 0); 
         }
 
-        /* 💡 The Actual Dot */
         .market-dot {
-            width: 20px;
-            height: 20px;
-            border-radius: 50%;
-            transition: transform 0.2s; 
-            /* 💡 IMPORTANT: สีจะถูกกำหนดด้วย Inline Style: background-color: var(--open-color); */
+            width: 20px; height: 20px; border-radius: 50%; transition: transform 0.2s; 
         }
         
-        /* 🌟 FIX: บังคับ Z-INDEX ของ Element Icon ของ Leaflet (V5.7) */
-        .leaflet-marker-icon.market-icon-container {
-            z-index: 900 !important; 
-            opacity: 1.0 !important;
-            /* CRITICAL FIX: ป้องกันการปรับตำแหน่งที่ไม่จำเป็น */
-            will-change: transform; 
-        }
+        .leaflet-marker-icon.market-icon-container { z-index: 900 !important; opacity: 1.0 !important; will-change: transform; }
 
-        /* 💡 HOVER EFFECT KEYFRAMES (คงเดิม) */
+        /* 💡 HOVER EFFECT KEYFRAMES */
         @keyframes pulse-float {
             0% { transform: scale(1.0); box-shadow: 0 0 5px 0 rgba(255, 255, 255, 0.5); }
             50% { transform: scale(1.1); box-shadow: 0 0 10px 2px rgba(255, 255, 255, 0.8); }
             100% { transform: scale(1.0); box-shadow: 0 0 5px 0 rgba(255, 255, 255, 0.5); }
         }
 
-        /* 💡 HOVER EFFECT APPLIED (ใช้กับ Container) */
-        .leaflet-marker-icon:hover .market-dot {
-             animation: pulse-float 1.2s infinite ease-in-out; 
-             cursor: pointer; 
-        }
+        .leaflet-marker-icon:hover .market-dot { animation: pulse-float 1.2s infinite ease-in-out; cursor: pointer; }
         
-        /* 💡 FINAL FIX: ลบ Focus Outline สีแดง/น้ำเงิน ออกจากทุกองค์ประกอบใน Leaflet Pane (ขั้นเด็ดขาด) */
-        .leaflet-pane a:focus, 
-        .leaflet-pane *:focus,
-        .leaflet-container a:focus,
-        .leaflet-container *:focus { 
-            outline: none !important;
-            box-shadow: none !important;
-        }
+        /* 💡 Remove Focus Outline */
+        .leaflet-pane a:focus, .leaflet-pane *:focus, .leaflet-container a:focus, .leaflet-container *:focus { outline: none !important; box-shadow: none !important; }
         
-        /* 💡 NEW FIX: Z-index สำหรับ Tooltip Pane */
-        .leaflet-tooltip-pane {
-             z-index: 1000 !important; /* ต้องสูงกว่า Marker Pane (900) */
-        }
-
-        /* 💡 สไตล์สำหรับ Tooltip (แทน Popup) */
-        .leaflet-tooltip {
-             padding: 0; 
-             margin: 0; 
-             opacity: 0.95 !important;
-             background-color: transparent !important; 
-             border: none !important; 
-             /* 🚨 CRITICAL FIX: ต้องให้ Tooltip รับ Pointer Events เมื่อเป็น Sticky */
-             pointer-events: auto !important; 
-        }
-        
-        /* 💡 สไตล์สำหรับเนื้อหา Tooltip */
+        /* 💡 Tooltip Styles */
+        .leaflet-tooltip-pane { z-index: 1000 !important; }
+        .leaflet-tooltip { padding: 0; margin: 0; opacity: 0.95 !important; background-color: transparent !important; border: none !important; pointer-events: auto !important; }
         .leaflet-tooltip-pane .market-tooltip-content {
-            font-family: 'Chakra Petch', sans-serif;
-            font-size: 0.9em;
-            background-color: var(--card-bg); 
-            color: var(--text-color);
-            padding: 10px 12px; 
-            border-radius: 5px;
-            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.2);
-            border: 1px solid var(--border-color);
-            white-space: nowrap; 
-            z-index: 1000; 
+            font-family: 'Chakra Petch', sans-serif; font-size: 0.9em; background-color: var(--card-bg); 
+            color: var(--text-color); padding: 10px 12px; border-radius: 5px; box-shadow: 0 3px 10px rgba(0, 0, 0, 0.2);
+            border: 1px solid var(--border-color); white-space: nowrap; z-index: 1000; 
         }
         
-        /* 💡 ปรับตำแหน่งของปุ่มควบคุมแผนที่ */
-        .leaflet-top.leaflet-right {
-            top: auto; 
-            padding-top: 10px; 
-        }
+        /* 💡 Zoom Control Position */
+        .leaflet-top.leaflet-right { top: auto; padding-top: 10px; }
         
         /* 💡 Footer */
         .footer {
-            width: 100%;
-            background-color: var(--card-bg);
-            color: var(--text-color);
-            text-align: center;
-            padding: 5px 0;
-            font-size: 0.8em;
-            border-top: 1px solid var(--border-color);
-            z-index: 1000; 
-            opacity: 0.8;
-            transition: background-color 0.3s, color 0.3s;
-            flex-shrink: 0; 
+            width: 100%; background-color: var(--card-bg); color: var(--text-color);
+            text-align: center; padding: 5px 0; font-size: 0.8em; border-top: 1px solid var(--border-color);
+            z-index: 1000; opacity: 0.8; transition: background-color 0.3s, color 0.3s; flex-shrink: 0; 
         }
-        
-        /* 💡 Media Query สำหรับ Mobile */
-        @media (max-width: 768px) {
-            
-            :root {
-                --header-gap-normal: 8px; 
-                --header-gap-double: 16px; 
-                --legend-height-px: 30px; 
-                --legend-font-size-desktop: 0.7em; 
-            }
-            
-            .header {
-                 padding: 10px 15px;
-            }
-            
-            .leaflet-top.leaflet-right {
-                padding-top: 5px; 
-                right: 5px; 
-            }
-            
-            .closed-banner {
-                font-size: 0.9em;
-            }
-        }
+
+        /* 💡 NEW: Marker Cluster Colors (Light Mode) */
+        .marker-cluster-small { background-color: rgba(33, 150, 243, 0.4); } /* Blue-ish (Near) */
+        .marker-cluster-small div { background-color: rgba(33, 150, 243, 0.7); color: white; }
+        .marker-cluster-medium { background-color: rgba(255, 193, 7, 0.4); } /* Yellow-ish (Medium) */
+        .marker-cluster-medium div { background-color: rgba(255, 193, 7, 0.7); color: #333; }
+        .marker-cluster-large { background-color: rgba(220, 53, 69, 0.4); } /* Red-ish (Closed) */
+        .marker-cluster-large div { background-color: rgba(220, 53, 69, 0.7); color: white; }
     </style>
 </head>
 <body class="dark-mode"> 
 
     <div class="header" id="mainHeader">
-        <div class="header-top">
-            <h1>🌎 World Market Map</h1> 
-        </div>
-        
+        <div class="header-top"><h1>🌎 World Market Map</h1></div>
         <div class="time-display">
             🇹🇭 <span id="current-date"></span>, เวลาปัจจุบัน: <span id="current-time"></span>
         </div>
-
         <div class="mode-toggle-control">
             <span id="modeStatusText">🌙 โหมดมืด</span>
             <label class="toggle-switch">
@@ -331,20 +190,13 @@
                 <span class="slider"></span>
             </label>
         </div>
-        
+        <div class="search-control">
+             <input type="text" id="marketSearch" placeholder="ค้นหาตลาดหุ้น (เช่น Tokyo, NYSE)...">
+        </div>
         <div class="legend-bar">
-            <div class="legend-item">
-                <div class="legend-icon open-icon"></div>
-                <span>**สีเขียว**: เปิดทำการ (Open)</span>
-            </div>
-            <div class="legend-item">
-                <div class="legend-icon closed-icon"></div>
-                <span>**สีแดง**: ปิดทำการ (Closed)</span>
-            </div>
-            <div class="legend-item">
-                <div class="legend-icon near-icon"></div>
-                <span>**สีเหลือง**: ใกล้เปิด/ปิด หรือพักกลางวัน (Near/Break)</span>
-            </div>
+            <div class="legend-item"><div class="legend-icon open-icon"></div><span>**สีเขียว**: เปิดทำการ (Open)</span></div>
+            <div class="legend-item"><div class="legend-icon closed-icon"></div><span>**สีแดง**: ปิดทำการ (Closed)</span></div>
+            <div class="legend-item"><div class="legend-icon near-icon"></div><span>**สีเหลือง**: ใกล้เปิด/ปิด หรือพักกลางวัน (Near/Break)</span></div>
         </div>
     </div>
     
@@ -355,238 +207,222 @@
     </div>
 
     <div class="footer">
-        2025 Copyright/Developer by thetylerlab
+        2025 Copyright/Developer by thetylerlab | Version 7.1 (Marker Clustering)
     </div>
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    
+    <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.1/moment.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/moment-timezone/0.5.33/moment-timezone-with-data-10-year-range.min.js"></script>
         
     <script>
         // 💡 ตั้งค่า Path สำหรับ Default Leaflet Icons
         delete L.Icon.Default.prototype._getIconUrl; 
         
-        // Data for major stock exchanges (Time is in GMT+7)
+        // --- 1. MARKET DATA (INCLUDING HOLIDAYS) ---
+        // Holidays must be in YYYY-MM-DD format (ISO 8601)
+        const marketHolidays = {
+            'SET': ['2025-10-23', '2025-12-05', '2025-12-10'], 
+            'NYSE': ['2025-01-01', '2025-01-20', '2025-05-26'], 
+            'TSE': ['2025-01-01', '2025-01-13', '2025-02-11'], 
+        };
+        
         const markets = [
             // === เอเชีย/แปซิฟิก ===
-            { id: 'SET', name: 'Bangkok (ไทย)', exchange: 'SET', lat: 13.7563, lon: 100.5018, open: '10:00', close: '16:30', breakStart: '12:30', breakEnd: '14:00', dst: false },
-            { id: 'TSE', name: 'Tokyo (JP)', exchange: 'TSE (Nikkei 225)', lat: 35.6895, lon: 139.6917, open: '07:00', close: '13:00', breakStart: '09:30', breakEnd: '10:30', dst: false },
-            { id: 'KSE', name: 'Seoul (KR)', exchange: 'KSE (KOSPI)', lat: 37.5665, lon: 126.9780, open: '07:00', close: '13:30', breakStart: '', breakEnd: '', dst: false },
-            { id: 'HKEX', name: 'Hong Kong (HK)', exchange: 'HKEX (Hang Seng)', lat: 22.3193, lon: 114.1694, open: '08:30', close: '15:00', breakStart: '11:00', breakEnd: '12:00', dst: false },
-            { id: 'SSE', name: 'Shanghai (CN)', exchange: 'SSE (Shanghai)', lat: 31.2304, lon: 121.4737, open: '08:30', close: '14:00', breakStart: '10:30', breakEnd: '12:00', dst: false },
-            { id: 'ASX', name: 'Sydney (AU)', exchange: 'ASX', lat: -33.8688, lon: 151.2093, open: '07:00', close: '13:00', breakStart: '', breakEnd: '', dst: false }, 
-            { id: 'BSE', name: 'Mumbai (IN)', exchange: 'BSE (Sensex)', lat: 18.9750, lon: 72.8258, open: '10:30', close: '17:00', breakStart: '', breakEnd: '', dst: false },
+            { id: 'SET', name: 'Bangkok (ไทย)', exchange: 'SET', lat: 13.7563, lon: 100.5018, open: '10:00', close: '16:30', breakStart: '12:30', breakEnd: '14:00', dst: false, timezone: 'Asia/Bangkok' },
+            { id: 'TSE', name: 'Tokyo (JP)', exchange: 'TSE (Nikkei 225)', lat: 35.6895, lon: 139.6917, open: '09:00', close: '15:00', breakStart: '11:30', breakEnd: '12:30', dst: false, timezone: 'Asia/Tokyo' }, 
+            { id: 'KSE', name: 'Seoul (KR)', exchange: 'KSE (KOSPI)', lat: 37.5665, lon: 126.9780, open: '09:00', close: '15:30', breakStart: '', breakEnd: '', dst: false, timezone: 'Asia/Seoul' }, 
+            { id: 'HKEX', name: 'Hong Kong (HK)', exchange: 'HKEX (Hang Seng)', lat: 22.3193, lon: 114.1694, open: '09:30', close: '16:00', breakStart: '12:00', breakEnd: '13:00', dst: false, timezone: 'Asia/Hong_Kong' }, 
+            { id: 'SSE', name: 'Shanghai (CN)', exchange: 'SSE (Shanghai)', lat: 31.2304, lon: 121.4737, open: '09:30', close: '15:00', breakStart: '11:30', breakEnd: '13:00', dst: false, timezone: 'Asia/Shanghai' },
+            { id: 'ASX', name: 'Sydney (AU)', exchange: 'ASX', lat: -33.8688, lon: 151.2093, open: '10:00', close: '16:00', breakStart: '', breakEnd: '', dst: true, timezone: 'Australia/Sydney' }, 
+            { id: 'BSE', name: 'Mumbai (IN)', exchange: 'BSE (Sensex)', lat: 18.9750, lon: 72.8258, open: '09:15', close: '15:30', breakStart: '', breakEnd: '', dst: false, timezone: 'Asia/Kolkata' },
+            { id: 'IDX', name: 'Jakarta (ID)', exchange: 'IDX', lat: -6.1754, lon: 106.8272, open: '09:00', close: '16:00', breakStart: '12:00', breakEnd: '13:30', dst: false, timezone: 'Asia/Jakarta' },
             
             // === ยุโรป/ตะวันออกกลาง/แอฟริกา ===
-            { id: 'LSE', name: 'London (UK)', exchange: 'LSE (FTSE 100)', lat: 51.5074, lon: 0.1278, openSummer: '14:00', closeSummer: '22:30', openWinter: '15:00', closeWinter: '23:30', dst: true },
-            { id: 'XETRA', name: 'Frankfurt (DE)', exchange: 'XETRA (DAX)', lat: 50.1109, lon: 8.6821, openSummer: '14:00', closeSummer: '22:30', openWinter: '15:00', closeWinter: '23:30', dst: true },
-            { id: 'SAX', name: 'Stockholm (SE)', exchange: 'SAX (OMX)', lat: 59.3293, lon: 18.0686, openSummer: '14:00', closeSummer: '22:30', openWinter: '15:00', closeWinter: '23:30', dst: true },
-            { id: 'TASE', name: 'Tel Aviv (IL)', exchange: 'TASE (TA-35)', lat: 32.0853, lon: 34.7818, open: '13:30', close: '23:30', breakStart: '', breakEnd: '', dst: false }, 
-            { id: 'TADAWUL', name: 'Riyadh (SA)', exchange: 'Tadawul', lat: 24.7136, lon: 46.6069, open: '14:00', close: '21:00', breakStart: '', breakEnd: '', dst: false },
+            { id: 'LSE', name: 'London (UK)', exchange: 'LSE (FTSE 100)', lat: 51.5074, lon: 0.1278, open: '08:00', close: '16:30', breakStart: '', breakEnd: '', dst: true, timezone: 'Europe/London' },
+            { id: 'XETRA', name: 'Frankfurt (DE)', exchange: 'XETRA (DAX)', lat: 50.1109, lon: 8.6821, open: '09:00', close: '17:30', breakStart: '', breakEnd: '', dst: true, timezone: 'Europe/Berlin' },
+            { id: 'JSE', name: 'Johannesburg (ZA)', exchange: 'JSE', lat: -26.2041, lon: 28.0473, open: '09:00', close: '17:00', breakStart: '', breakEnd: '', dst: false, timezone: 'Africa/Johannesburg' },
+            { id: 'TASE', name: 'Tel Aviv (IL)', exchange: 'TASE (TA-35)', lat: 32.0853, lon: 34.7818, open: '09:45', close: '16:30', breakStart: '', breakEnd: '', dst: true, timezone: 'Asia/Jerusalem' }, 
+            { id: 'TADAWUL', name: 'Riyadh (SA)', exchange: 'Tadawul', lat: 24.7136, lon: 46.6069, open: '10:00', close: '15:00', breakStart: '', breakEnd: '', dst: false, timezone: 'Asia/Riyadh' },
             
             // === อเมริกาเหนือ/ใต้ ===
-            { id: 'NYSE', name: 'New York (US)', exchange: 'NYSE / NASDAQ', lat: 40.7128, lon: -74.0060, openSummer: '20:30', closeSummer: '03:00', openWinter: '21:30', closeWinter: '04:00', dst: true },
-            { id: 'TSX', name: 'Toronto (CA)', exchange: 'TSX', lat: 43.6532, lon: -79.3832, openSummer: '20:30', closeSummer: '03:00', openWinter: '21:30', closeWinter: '04:00', dst: true },
-            { id: 'BMV', name: 'Mexico City (MX)', exchange: 'BMV', lat: 19.4326, lon: -99.1332, openSummer: '20:30', closeSummer: '03:00', openWinter: '21:30', closeWinter: '04:00', dst: true }, 
-            { id: 'B3', name: 'São Paulo (BR)', exchange: 'B3 (Ibovespa)', lat: -23.5505, lon: -46.6333, openSummer: '20:00', closeSummer: '03:00', openWinter: '21:00', closeWinter: '04:00', dst: true }, 
+            { id: 'NYSE', name: 'New York (US)', exchange: 'NYSE / NASDAQ', lat: 40.7128, lon: -74.0060, open: '09:30', close: '16:00', breakStart: '', breakEnd: '', dst: true, timezone: 'America/New_York' },
+            { id: 'TSX', name: 'Toronto (CA)', exchange: 'TSX', lat: 43.6532, lon: -79.3832, open: '09:30', close: '16:00', breakStart: '', breakEnd: '', dst: true, timezone: 'America/Toronto' },
+            { id: 'BMV', name: 'Mexico City (MX)', exchange: 'BMV', lat: 19.4326, lon: -99.1332, open: '08:30', close: '15:00', breakStart: '', breakEnd: '', dst: true, timezone: 'America/Mexico_City' }, 
+            { id: 'B3', name: 'São Paulo (BR)', exchange: 'B3 (Ibovespa)', lat: -23.5505, lon: -46.6333, open: '10:00', close: '17:00', breakStart: '', breakEnd: '', dst: true, timezone: 'America/Sao_Paulo' }, 
+            
+            // 💡 เพิ่มตลาดอื่นๆ เพื่อให้เห็น Marker Clustering ชัดเจน
+            { id: 'MOEX', name: 'Moscow (RU)', exchange: 'MOEX', lat: 55.7558, lon: 37.6173, open: '09:50', close: '18:50', breakStart: '', breakEnd: '', dst: false, timezone: 'Europe/Moscow' },
+            { id: 'EURONEXT', name: 'Paris (FR)', exchange: 'Euronext', lat: 48.8566, lon: 2.3522, open: '09:00', close: '17:30', breakStart: '', breakEnd: '', dst: true, timezone: 'Europe/Paris' },
+            { id: 'SIX', name: 'Zurich (CH)', exchange: 'SIX', lat: 47.3769, lon: 8.5417, open: '09:00', close: '17:30', breakStart: '', breakEnd: '', dst: true, timezone: 'Europe/Zurich' },
         ];
-
-        // 💡 Tile Layer URLs
-        const lightMapTile = 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png'; 
-        const darkMapTile = 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png'; 
 
         let mymap;
         let currentTileLayer;
         const marketMarkers = {};
         let stickyTooltip = null; 
+        
+        // 💡 NEW: Marker Cluster Group
+        let markerClusterGroup; 
 
-        // --- ฟังก์ชัน Time Calculation (คงเดิม) ---
-        function isDST(date) { 
-            const year = date.getFullYear();
-            const getSunday = (month, n) => {
-                let d = new Date(year, month, 1);
-                let count = 0;
-                while (count < n) {
-                    if (d.getDay() === 0) count++;
-                    if (count === n) return d;
-                    d.setDate(d.getDate() + 1);
-                }
-            };
-            const secondSundayMarch = getSunday(2, 2); 
-            const firstSundayNovember = getSunday(10, 1); 
-            return (date >= secondSundayMarch && date < firstSundayNovember);
-        }
-
-        function getTimeObject(timeStr, baseDate) { 
-            const [hours, minutes] = timeStr.split(':').map(Number);
-            let marketTime = new Date(baseDate); 
-            marketTime.setHours(hours, minutes, 0, 0);
-            return marketTime;
-        }
-
+        // --- ฟังก์ชัน Time Calculation (Unchanged from 7.0) ---
         function formatTimeDiff(diffMs) { 
             if (diffMs < 0) return '00:00:00';
             const totalSeconds = Math.floor(diffMs / 1000);
-            const hours = Math.floor((totalSeconds / 3600) % 24); 
+            const hours = Math.floor(totalSeconds / 3600); 
             const minutes = Math.floor((totalSeconds % 3600) / 60);
             const seconds = totalSeconds % 60;
-            return `${String(hours).padStart(2, '0')} ชม. ${String(minutes).padStart(2, '0')} น. ${String(seconds).padStart(2, '0')} ว.`;
+            
+            let parts = [];
+            if (hours > 0) parts.push(`${hours} ชม.`);
+            parts.push(`${String(minutes).padStart(2, '0')} น.`);
+            parts.push(`${String(seconds).padStart(2, '0')} ว.`);
+            
+            return parts.join(' ');
         }
         
-        function getMarketStatus(market, now) { 
-            const dayOfWeek = now.getDay(); 
-            let openTimeStr, closeTimeStr, breakStartStr, breakEndStr;
-            let currentDST = market.dst ? isDST(now) : false;
-            let dstStatus = market.dst ? (currentDST ? 'ฤดูร้อน (DST)' : 'ฤดูหนาว') : '';
-            
-            // 1. วันหยุดสุดสัปดาห์ 
-            if (dayOfWeek === 0 || dayOfWeek === 6) { 
-                let nextOpenTime = new Date(now);
-                nextOpenTime.setDate(now.getDate() + (dayOfWeek === 0 ? 1 : 2)); 
-
-                const defaultOpenTimeStr = market.open || market.openWinter || market.openSummer;
-                if(defaultOpenTimeStr) {
-                    const [h, m] = defaultOpenTimeStr.split(':').map(Number); 
-                    nextOpenTime.setHours(h, m || 0, 0, 0);
-                } else {
-                    nextOpenTime = new Date(now);
-                    nextOpenTime.setDate(now.getDate() + (dayOfWeek === 0 ? 1 : 2)); 
-                    nextOpenTime.setHours(10, 0, 0, 0); 
-                }
-                
-                const diffMs = nextOpenTime - now;
-                return { 
-                    status: '❌ ปิดทำการ (วันหยุดสุดสัปดาห์)', 
-                    countdownText: `จะเปิดในวันจันทร์${defaultOpenTimeStr ? ` เวลา ${defaultOpenTimeStr}` : ''} อีก: ${formatTimeDiff(diffMs)}`, 
-                    statusClass: 'closed', 
-                    tradingHours: 'วันจันทร์ – ศุกร์' + (market.breakStart ? ' (มีพักกลางวัน)' : ''),
-                    dstStatus,
-                    isClosed: true
-                };
-            }
-            
-            // 2. กำหนดเวลาเปิด/ปิด
-            if (market.dst) {
-                openTimeStr = currentDST ? market.openSummer : market.openWinter;
-                closeTimeStr = currentDST ? market.closeSummer : market.closeWinter;
-            } else {
-                openTimeStr = market.open;
-                closeTimeStr = market.close;
-            }
-            
-            breakStartStr = market.breakStart;
-            breakEndStr = market.breakEnd;
-
-            // 3. สร้างวัตถุเวลาในวันปัจจุบัน
-            let openTime = getTimeObject(openTimeStr, now);
-            let closeTime = getTimeObject(closeTimeStr, now);
-            let breakStartTime, breakEndTime;
-            
-            if (breakStartStr && breakEndStr) {
-                 breakStartTime = getTimeObject(breakStartStr, now);
-                 breakEndTime = getTimeObject(breakEndStr, now);
-            }
+        function getMarketStatus(market) { 
+            const nowInMarketZone = moment().tz(market.timezone);
+            const dayOfWeek = nowInMarketZone.day(); 
+            const todayDateStr = nowInMarketZone.format('YYYY-MM-DD');
+            const openTimeStr = market.open;
+            const closeTimeStr = market.close;
+            const breakStartStr = market.breakStart;
+            const breakEndStr = market.breakEnd;
             
             let status, countdownText, statusClass;
             let diffMs;
-            let tradingHours = `${openTimeStr} – ${closeTimeStr} น.`;
-            if (breakStartStr) tradingHours += ` (พัก ${breakStartStr} – ${breakEndStr} น.)`;
+            let nextOpen = null; 
+
+            // 1. ตรวจสอบวันหยุดนักขัตฤกษ์
+            const holidays = marketHolidays[market.id] || [];
+            const isHoliday = holidays.includes(todayDateStr);
             
-            // 4. การจัดการตลาดข้ามเที่ยงคืน (Overnight Market - CORE LOGIC FIX)
-            const isOvernight = openTime.getTime() > closeTime.getTime();
-            
-            if (isOvernight) {
-                if (now.getTime() >= openTime.getTime() || now.getTime() < closeTime.getTime()) {
-                    closeTime.setDate(closeTime.getDate() + 1); 
+            if (isHoliday) {
+                let nextWorkingDay = nowInMarketZone.clone().add(1, 'day');
+                while (nextWorkingDay.day() === 0 || nextWorkingDay.day() === 6 || holidays.includes(nextWorkingDay.format('YYYY-MM-DD'))) {
+                    nextWorkingDay.add(1, 'day');
                 }
-            } else { 
-                // ตลาด Daytime
-                 if (now.getTime() > closeTime.getTime()) { 
-                    openTime.setDate(openTime.getDate() + 1);
-                 }
+                
+                const [h, m] = market.open.split(':')[0] ? market.open.split(':').map(Number) : [9, 0];
+                nextOpen = nextWorkingDay.set({ hour: h, minute: m, second: 0, millisecond: 0 });
+                diffMs = nextOpen.diff(nowInMarketZone);
+                
+                return { 
+                    status: '❌ ปิดทำการ (วันหยุด)', 
+                    countdownText: `จะเปิดในวัน${nextOpen.format('dd')} เวลา ${market.open} อีก: ${formatTimeDiff(diffMs)}`, 
+                    statusClass: 'closed', 
+                    tradingHours: `${openTimeStr} – ${closeTimeStr} น. (${nowInMarketZone.zoneAbbr()})`,
+                    localTime: nowInMarketZone.format('HH:mm:ss'),
+                    isClosed: true
+                };
+            }
+
+
+            // 2. ตรวจสอบวันหยุดสุดสัปดาห์
+            if (dayOfWeek === 0 || dayOfWeek === 6) { 
+                nextOpen = nowInMarketZone.clone().day(dayOfWeek === 0 ? 1 : 8); 
+                while (nextOpen.day() === 0 || nextOpen.day() === 6 || holidays.includes(nextOpen.format('YYYY-MM-DD'))) {
+                    nextOpen.add(1, 'day');
+                }
+                
+                const [h, m] = market.open.split(':')[0] ? market.open.split(':').map(Number) : [9, 0];
+                nextOpen.set({ hour: h, minute: m, second: 0, millisecond: 0 });
+                const diff = nextOpen.diff(nowInMarketZone);
+                
+                return { 
+                    status: '❌ ปิดทำการ (วันหยุดสุดสัปดาห์)', 
+                    countdownText: `จะเปิดในวัน${nextOpen.format('dd')} เวลา ${market.open} อีก: ${formatTimeDiff(diff)}`, 
+                    statusClass: 'closed', 
+                    tradingHours: `${openTimeStr} – ${closeTimeStr} น. (${nowInMarketZone.zoneAbbr()})`,
+                    localTime: nowInMarketZone.format('HH:mm:ss'),
+                    isClosed: true
+                };
+            }
+
+            // 3. กำหนดเวลา Open/Close/Break 
+            let openTime = nowInMarketZone.clone().set({ hour: parseInt(openTimeStr.split(':')[0]), minute: parseInt(openTimeStr.split(':')[1]), second: 0, millisecond: 0 });
+            let closeTime = nowInMarketZone.clone().set({ hour: parseInt(closeTimeStr.split(':')[0]), minute: parseInt(closeTimeStr.split(':')[1]), second: 0, millisecond: 0 });
+            let breakStart = breakStartStr ? nowInMarketZone.clone().set({ hour: parseInt(breakStartStr.split(':')[0]), minute: parseInt(breakStartStr.split(':')[1]), second: 0, millisecond: 0 }) : null;
+            let breakEnd = breakEndStr ? nowInMarketZone.clone().set({ hour: parseInt(breakEndStr.split(':')[0]), minute: parseInt(breakEndStr.split(':')[1]), second: 0, millisecond: 0 }) : null;
+
+            // 4. การจัดการตลาดข้ามเที่ยงคืน
+            if (openTime.isAfter(closeTime)) { 
+                if (nowInMarketZone.isBefore(closeTime)) { openTime.subtract(1, 'day'); } else { closeTime.add(1, 'day'); }
+            } else {
+                 if (nowInMarketZone.isAfter(closeTime)) {
+                    let nextWorkingDay = nowInMarketZone.clone().add(1, 'day');
+                    while (nextWorkingDay.day() === 0 || nextWorkingDay.day() === 6 || holidays.includes(nextWorkingDay.format('YYYY-MM-DD'))) {
+                        nextWorkingDay.add(1, 'day');
+                    }
+                    openTime = nextWorkingDay.clone().set({ hour: openTime.hour(), minute: openTime.minute(), second: 0, millisecond: 0 });
+                    closeTime = nextWorkingDay.clone().set({ hour: closeTime.hour(), minute: closeTime.minute(), second: 0, millisecond: 0 });
+                    breakStart = breakStart ? nextWorkingDay.clone().set({ hour: breakStart.hour(), minute: breakStart.minute(), second: 0, millisecond: 0 }) : null;
+                    breakEnd = breakEnd ? nextWorkingDay.clone().set({ hour: breakEnd.hour(), minute: breakEnd.minute(), second: 0, millisecond: 0 }) : null;
+                }
             }
             
             // 5. จัดการเวลาพักกลางวัน 
-            if (breakStartTime && breakEndTime) {
-                 if (breakStartTime.getTime() > breakEndTime.getTime()) { 
-                    if (now.getTime() < breakStartTime.getTime()) {
-                         breakEndTime.setDate(breakEndTime.getDate() + 1);
-                    }
-                 }
+            if (breakStart && breakEnd && breakStart.isAfter(breakEnd)) {
+                 if (nowInMarketZone.isBefore(breakEnd)) { breakStart.subtract(1, 'day'); } else { breakEnd.add(1, 'day'); }
             }
             
-            // 6. กำหนดสถานะสุดท้าย
-            const isDuringBreak = breakStartTime && breakEndTime && now >= breakStartTime && now < breakEndTime;
-            const isOpen = now >= openTime && now < closeTime && !isDuringBreak;
+            // 6. กำหนดสถานะ
+            const isDuringBreak = breakStart && breakEnd && nowInMarketZone.isBetween(breakStart, breakEnd, null, '[]');
+            const isOpen = nowInMarketZone.isBetween(openTime, closeTime, null, '[]') && !isDuringBreak;
             
-            let nextOpenTime = openTime; 
+            let nextEventTime;
             
             if (isOpen) {
-                diffMs = closeTime - now;
+                nextEventTime = isDuringBreak ? breakEnd : closeTime;
+                diffMs = nextEventTime.diff(nowInMarketZone);
                 status = '✅ เปิดทำการ';
                 statusClass = 'open';
                 countdownText = `เหลือเวลาปิด: ${formatTimeDiff(diffMs)}`;
             } else if (isDuringBreak) {
-                diffMs = breakEndTime - now;
+                nextEventTime = breakEnd;
+                diffMs = nextEventTime.diff(nowInMarketZone);
                 status = '⏸️ พักกลางวัน';
                 statusClass = 'near';
                 countdownText = `จะเปิดอีกครั้งใน: ${formatTimeDiff(diffMs)}`;
-                nextOpenTime = breakEndTime; 
             } else {
-                // 7. ตลาดปิด (Closed) และคำนวณ Next Open Time
                 status = '❌ ปิดทำการ';
                 statusClass = 'closed';
-
-                if (openTime.getTime() <= now.getTime()) {
-                    let tempOpen = getTimeObject(openTimeStr, now);
-                    tempOpen.setDate(tempOpen.getDate() + 1); 
-                    
-                    if (dayOfWeek === 5) {
-                        tempOpen.setDate(tempOpen.getDate() + 2); 
-                    } else if (dayOfWeek === 4 && isOvernight && now.getHours() < 12) { 
-                         tempOpen.setDate(tempOpen.getDate() + 2);
-                    }
-
-                    nextOpenTime = tempOpen;
+                nextEventTime = openTime; 
+                diffMs = nextEventTime.diff(nowInMarketZone); 
+                
+                if (nextEventTime.day() === nowInMarketZone.day()) {
+                    countdownText = `จะเปิดในอีก: ${formatTimeDiff(diffMs)}`;
                 } else {
-                    nextOpenTime = openTime;
-                }
-                
-                diffMs = nextOpenTime - now; 
-                
-                if ((dayOfWeek === 5 && now.getTime() > closeTime.getTime()) || 
-                    (dayOfWeek === 4 && isOvernight && now.getHours() < 12)) {
-                     countdownText = `จะเปิดในวันจันทร์ อีก: ${formatTimeDiff(diffMs)}`;
-                }
-                else {
-                     countdownText = `จะเปิดในอีก: ${formatTimeDiff(diffMs)}`;
+                    countdownText = `จะเปิดในวัน${nextEventTime.format('dd')} เวลา ${market.open} อีก: ${formatTimeDiff(diffMs)}`;
                 }
             }
 
-            const fifteenMinutes = 15 * 60 * 1000;
-            if (isOpen && diffMs <= fifteenMinutes) {
+            // 7. กำหนดสถานะ NEAR (ภายใน 15 นาที)
+            const fifteenMinutes = moment.duration(15, 'minutes');
+            if (!isOpen && nextEventTime.diff(nowInMarketZone) <= fifteenMinutes.asMilliseconds() && nextEventTime.diff(nowInMarketZone) > 0) {
+                 status = '🔔 ใกล้เปิดแล้ว';
+                 statusClass = 'near';
+            } else if (isOpen && closeTime.diff(nowInMarketZone) <= fifteenMinutes.asMilliseconds() && !isDuringBreak) {
                 status = '⚠️ ใกล้ปิดแล้ว';
                 statusClass = 'near';
-            } else if (!isOpen && diffMs <= fifteenMinutes && diffMs > 0) {
-                status = '🔔 ใกล้เปิดแล้ว';
-                statusClass = 'near';
             }
             
-            return { 
-                status, 
-                countdownText, 
-                statusClass, 
-                tradingHours: `วันจันทร์ – ศุกร์ (${tradingHours})`, 
-                dstStatus,
-                isClosed: statusClass === 'closed' 
-            };
+            // 8. สร้าง Trading Hours
+            let tradingHours = `${market.open} – ${market.close} น. (${nowInMarketZone.zoneAbbr()})`;
+            if (market.breakStart) tradingHours += ` (พัก ${market.breakStart} – ${market.breakEnd} น.)`;
+            if (market.dst) tradingHours += ` [${nowInMarketZone.isDST() ? 'DST' : 'Standard Time'}]`;
+            
+            const localTimeStr = nowInMarketZone.format('HH:mm:ss');
+
+            return { status, countdownText, statusClass, tradingHours: tradingHours, localTime: localTimeStr, isClosed: statusClass === 'closed' };
         }
 
-        // --- ฟังก์ชันอื่นๆ (V6.2 FIX: determineInitialView) ---
+        // --- 2. MAP INITIALIZATION AND CONTROLS ---
         function determineInitialView() {
-            const targetLat = 13.7563; 
-            const targetLon = 100.5018; 
-            const targetZoom = 2; 
-            
-            return { lat: targetLat, lon: targetLon, zoom: targetZoom }; 
+            return { lat: 13.7563, lon: 100.5018, zoom: 2 }; 
         }
 
         function setZoomControlPosition() {
@@ -608,13 +444,18 @@
                 zoomControl: true, 
                 maxZoom: 10, 
                 minZoom: 1, 
-                // V6.2: เปิดใช้งานการลากข้ามขอบโลก
                 worldCopyJump: true, 
                 dragging: true, 
              }); 
+             
+             // 💡 NEW: Initialize Marker Cluster Group
+             markerClusterGroup = L.markerClusterGroup({
+                maxClusterRadius: 80, // ลดขนาด Cluster Radius เล็กน้อย
+                disableClusteringAtZoom: 5, // ปิด Cluster เมื่อ Zoom >= 5
+                chunkedLoading: true
+             }).addTo(mymap);
 
              mymap.zoomControl.setPosition('topright'); 
-
              setMapTileLayer(document.body.classList.contains('dark-mode'));
              
              setTimeout(() => {
@@ -624,9 +465,8 @@
              
              setZoomControlPosition();
 
-             updateDashboardMap();
-             // 💡 Call updateDashboardMap every 1 second
-             setInterval(updateDashboardMap, 1000); 
+             updateDashboardMap(true); // Pass true to force redraw all markers
+             setInterval(() => updateDashboardMap(false), 1000); 
 
              mymap.on('click', function(e) {
                 if (stickyTooltip) {
@@ -647,6 +487,8 @@
         }
 
         function setMapTileLayer(isDarkMode) {
+            const lightMapTile = 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png'; 
+            const darkMapTile = 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png'; 
             const tileUrl = isDarkMode ? darkMapTile : lightMapTile;
             const modeText = document.getElementById('modeStatusText');
             
@@ -665,9 +507,10 @@
                 modeText.textContent = isDarkMode ? '🌙 โหมดมืด' : '☀️ โหมดสว่าง';
             }
         }
-
-        // 💡 MODIFIED: การจัดการ Marker (V6.4: Fix Auto-Open Tooltip)
-        function updateDashboardMap() {
+        
+        // --- 3. MARKET MARKER AND UPDATE LOGIC ---
+        // 💡 MODIFIED: Accepts forceRedraw argument for Marker Cluster logic
+        function updateDashboardMap(forceRedraw = false) {
             if (!mymap) return;
 
             const now = new Date();
@@ -678,20 +521,13 @@
             const dateElement = document.getElementById('current-date'); 
             const closedBanner = document.getElementById('closedBanner');
             
-            if (timeElement) {
-                timeElement.textContent = now.toLocaleTimeString('th-TH', timeOptions);
-            }
-            if (dateElement) {
-                 dateElement.textContent = now.toLocaleDateString('th-TH', dateOptions);
-            }
+            if (timeElement) { timeElement.textContent = now.toLocaleTimeString('th-TH', timeOptions); }
+            if (dateElement) { dateElement.textContent = now.toLocaleDateString('th-TH', dateOptions); }
             
             let allMarketsClosed = true;
             
-            const currentZoom = mymap.getZoom(); 
-            const isZoomedOut = currentZoom <= 1.5; 
-
             markets.forEach(market => {
-                const statusData = getMarketStatus(market, now);
+                const statusData = getMarketStatus(market); 
 
                 if (statusData.statusClass !== 'closed') {
                     allMarketsClosed = false; 
@@ -700,23 +536,32 @@
                 const markerId = market.id;
                 const currentStatusClass = statusData.statusClass;
                 
-                let statusColorVar = '';
-                if (currentStatusClass === 'open') statusColorVar = 'var(--open-color)'; 
-                else if (currentStatusClass === 'closed') statusColorVar = 'var(--closed-color)'; 
-                else statusColorVar = 'var(--near-color)'; 
+                let statusColorVar, statusColorHex;
+                if (currentStatusClass === 'open') { statusColorVar = 'var(--open-color)'; statusColorHex = '#28a745'; }
+                else if (currentStatusClass === 'closed') { statusColorVar = 'var(--closed-color)'; statusColorHex = '#dc3545'; }
+                else { statusColorVar = 'var(--near-color)'; statusColorHex = '#ffc107'; }
                 
-                let statusColorHex = '';
-                if (currentStatusClass === 'open') statusColorHex = '#28a745'; 
-                else if (currentStatusClass === 'closed') statusColorHex = '#dc3545'; 
-                else statusColorHex = '#ffc107'; 
+                const tooltipContent = `
+                    <div class="market-tooltip-content">
+                        <span style="font-weight: 700;">${market.name}</span> (${market.exchange})<br>
+                        สถานะ: <span style="font-weight: 700; color: ${statusColorHex}">${statusData.status}</span><br>
+                        ${statusData.countdownText}<br>
+                        **เวลาท้องถิ่น:** ${statusData.localTime}<br>
+                        **เวลาทำการ:** ${statusData.tradingHours}
+                    </div>
+                `;
                 
-                // 💡 V6.3: กำหนดทิศทาง Tooltip เป็น 'right' เสมอ
                 const tooltipDirection = 'right';
                 const tooltipOffset = L.point(10, 0); 
-                
-                
-                // 1. ตรวจสอบและสร้าง Marker ครั้งแรก
-                if (!marketMarkers[markerId]) {
+
+                // 1. ตรวจสอบและสร้าง Marker ครั้งแรก (หรือหากต้องการ Redraw)
+                if (forceRedraw || !marketMarkers[markerId]) {
+                    if (marketMarkers[markerId]) {
+                         // Remove existing marker before re-creating
+                         markerClusterGroup.removeLayer(marketMarkers[markerId]);
+                         delete marketMarkers[markerId];
+                    }
+                    
                     const marketIcon = L.divIcon({
                         className: 'market-icon-container', 
                         html: `<div class="market-dot" style="background-color: ${statusColorVar};"></div>`, 
@@ -727,18 +572,13 @@
                     const marker = L.marker([market.lat, market.lon], { 
                         icon: marketIcon,
                         bubblingMouseEvents: false 
-                    }).addTo(mymap);
+                    });
+                    
+                    // 💡 NEW: Add marker to the cluster group instead of map
+                    markerClusterGroup.addLayer(marker);
                     marketMarkers[markerId] = marker;
                     
-                    // 2. ผูก Tooltip และ Event Handlers
-                    const tooltipContent = `
-                        <div class="market-tooltip-content">
-                            <span style="font-weight: 700;">${market.name}</span> (${market.exchange})<br>
-                            สถานะ: <span style="font-weight: 700; color: ${statusColorHex}">${statusData.status}</span><br>
-                            ${statusData.countdownText}
-                        </div>
-                    `;
-
+                    // 2. ผูก Tooltip (Events need to be re-added)
                      marker.bindTooltip(tooltipContent, {
                         permanent: false, 
                         direction: tooltipDirection, 
@@ -748,88 +588,56 @@
                         className: 'market-tooltip',
                     });
                     
-                    // Event Handlers
-                     marker.on('mouseover', function (e) {
-                            if (this.getTooltip() !== stickyTooltip) {
-                                this.openTooltip();
-                            }
+                    marker.on('mouseover', function (e) {
+                            if (this.getTooltip() !== stickyTooltip) { this.openTooltip(); }
                         });
 
-                        marker.on('mouseout', function (e) {
-                             if (this.getTooltip() !== stickyTooltip) {
+                    marker.on('mouseout', function (e) {
+                            if (this.getTooltip() !== stickyTooltip) { this.closeTooltip(); }
+                        });
+
+                    marker.on('click', function (e) {
+                            L.DomEvent.stop(e); 
+                            const currentTooltip = this.getTooltip();
+                            
+                            if (stickyTooltip === currentTooltip) {
                                 this.closeTooltip();
+                                stickyTooltip = null;
+                            } else {
+                                if (stickyTooltip) {
+                                    let prevMarker = null;
+                                    for (const id in marketMarkers) {
+                                        if (marketMarkers[id].getTooltip() === stickyTooltip) {
+                                            prevMarker = marketMarkers[id];
+                                            break;
+                                        }
+                                    }
+                                    if (prevMarker) { prevMarker.closeTooltip(); }
+                                }
+                                stickyTooltip = currentTooltip;
+                                updateDashboardMap(false); 
                             }
-                        });
-
-                        marker.on('click', function (e) {
-                             L.DomEvent.stop(e); 
-                             
-                             const currentTooltip = this.getTooltip();
-                             
-                             if (stickyTooltip === currentTooltip) {
-                                  // UN-STICKY
-                                  this.closeTooltip();
-                                  stickyTooltip = null;
-                             } else {
-                                  // MAKE STICKY
-                                  if (stickyTooltip) {
-                                      let prevMarker = null;
-                                      for (const id in marketMarkers) {
-                                          if (marketMarkers[id].getTooltip() === stickyTooltip) {
-                                              prevMarker = marketMarkers[id];
-                                              break;
-                                          }
-                                      }
-                                      if (prevMarker) {
-                                           prevMarker.closeTooltip();
-                                      }
-                                  }
-                                  
-                                  stickyTooltip = currentTooltip;
-                                  
-                                  // เรียก updateDashboardMap ทันทีหลังคลิก เพื่อให้ Tooltip เปิดโดยไม่กระพริบ
-                                  updateDashboardMap(); 
-                             }
                         });
 
 
                 } else {
-                    // 3. อัปเดต Marker ที่มีอยู่แล้ว
+                    // 3. อัปเดต Marker ที่มีอยู่แล้ว (อัปเดตสีและเนื้อหา Tooltip เท่านั้น)
                     const marker = marketMarkers[markerId];
                     const markerElement = marker.getElement(); 
 
                     if (markerElement) {
                         const dotElement = markerElement.querySelector('.market-dot');
-                        
                         if (dotElement) {
-                            if (market.id === 'BMV' && isZoomedOut) {
-                                // Skip update
-                            } else {
-                                dotElement.style.backgroundColor = statusColorVar;
-                            }
+                            dotElement.style.backgroundColor = statusColorVar;
                         }
                     }
 
-                    // 4. อัปเดตเนื้อหา Tooltip เสมอ (สำหรับ Countdown Timer)
-                     const tooltipContent = `
-                        <div class="market-tooltip-content">
-                            <span style="font-weight: 700;">${market.name}</span> (${market.exchange})<br>
-                            สถานะ: <span style="font-weight: 700; color: ${statusColorHex}">${statusData.status}</span><br>
-                            ${statusData.countdownText}
-                        </div>
-                    `;
-                    
                     const tooltip = marker.getTooltip();
                     if (tooltip) {
                         tooltip.setContent(tooltipContent);
-                        tooltip.options.direction = tooltipDirection;
-                        tooltip.options.offset = tooltipOffset;
-
-                        // 💡 V6.4 FIX: ตรวจสอบและบังคับเปิด/ปิด Tooltip
                         if (tooltip === stickyTooltip) {
                             marker.openTooltip(); 
                         } else {
-                            // บังคับปิด Tooltip ที่ไม่ควรเปิด (แก้ปัญหาเปิดเอง)
                             marker.closeTooltip(); 
                         }
                     }
@@ -843,6 +651,68 @@
                 closedBanner.classList.remove('show');
             }
         }
+        
+        // --- 4. SEARCH FUNCTIONALITY (Unchanged from 7.0) ---
+        function setupSearchFunctionality() {
+            const searchInput = document.getElementById('marketSearch');
+            
+            searchInput.addEventListener('input', function() {
+                const query = this.value.toLowerCase().trim();
+                
+                if (query.length > 0) {
+                    const foundMarket = markets.find(m => 
+                        m.name.toLowerCase().includes(query) || 
+                        m.exchange.toLowerCase().includes(query) || 
+                        m.id.toLowerCase() === query
+                    );
+                    
+                    if (foundMarket) {
+                        const marker = marketMarkers[foundMarket.id];
+                        
+                        // 💡 NEW: Pan/Zoom to the marker location and spiderfy if necessary
+                        if (markerClusterGroup && marker) {
+                            markerClusterGroup.zoomToShowLayer(marker, function () {
+                                mymap.setView([foundMarket.lat, foundMarket.lon], 5, { animation: true }); 
+                            });
+                        } else {
+                             mymap.setView([foundMarket.lat, foundMarket.lon], 5, { animation: true }); 
+                        }
+                        
+                        // 2. บังคับเปิด Sticky Tooltip
+                        if (marker) {
+                            if (stickyTooltip) {
+                                let prevMarker = null;
+                                for (const id in marketMarkers) {
+                                    if (marketMarkers[id].getTooltip() === stickyTooltip) {
+                                        prevMarker = marketMarkers[id];
+                                        break;
+                                    }
+                                }
+                                if (prevMarker) { prevMarker.closeTooltip(); }
+                            }
+                            
+                            stickyTooltip = marker.getTooltip();
+                            updateDashboardMap(false); 
+                        }
+                    }
+                } else {
+                    if (stickyTooltip) {
+                        let markerToUnstick = null;
+                        for (const id in marketMarkers) {
+                            if (marketMarkers[id].getTooltip() === stickyTooltip) {
+                                markerToUnstick = marketMarkers[id];
+                                break;
+                            }
+                        }
+                        if (markerToUnstick) {
+                            markerToUnstick.closeTooltip();
+                            stickyTooltip = null;
+                        }
+                    }
+                }
+            });
+        }
+
 
         window.addEventListener('resize', () => {
              if (mymap) {
@@ -853,6 +723,7 @@
         
         document.addEventListener('DOMContentLoaded', () => {
              initMap();
+             setupSearchFunctionality(); 
              
              const darkModeToggle = document.getElementById('darkModeToggle');
              darkModeToggle.addEventListener('change', () => {

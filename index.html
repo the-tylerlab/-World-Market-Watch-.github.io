@@ -176,6 +176,35 @@
         .tooltip-time-info strong {
             font-weight: 500;
         }
+
+        /* 🚨 NEW: Style สำหรับ Market Data */
+        .tooltip-data-line {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 5px;
+            font-size: 1.0em;
+            font-weight: 700;
+        }
+
+        .data-index-value {
+             font-size: 1.1em;
+             color: var(--text-color); 
+        }
+        
+        .data-change-positive {
+             color: var(--open-color); 
+             font-weight: 700;
+        }
+        
+        .data-change-negative {
+             color: var(--closed-color); 
+             font-weight: 700;
+        }
+        .data-change-neutral {
+             color: var(--near-color); 
+             font-weight: 700;
+        }
         
         .footer {
             width: 100%; background-color: var(--card-bg); color: var(--text-color);
@@ -283,7 +312,7 @@
     </div>
 
     <div class="footer">
-        2025 Copyright/Developer by thetylerlab | Version 7.12 (Final Notch/Safe-Area Force Fix)
+        2025 Copyright/Developer by thetylerlab | Version 8.0 (Simulated Market Data & Final Notch Fix)
     </div>
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -292,7 +321,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/moment-timezone/0.5.33/moment-timezone-with-data-10-year-range.min.js"></script>
         
     <script>
-        // [JavaScript Code - Unchanged logic]
+        // [JavaScript Code]
         delete L.Icon.Default.prototype._getIconUrl; 
         
         const marketHolidays = {
@@ -303,25 +332,25 @@
         
         const markets = [
             { id: 'SET', name: 'Bangkok (ไทย)', exchange: 'SET', lat: 13.7563, lon: 100.5018, open: '10:00', close: '16:30', breakStart: '12:30', breakEnd: '14:00', dst: false, timezone: 'Asia/Bangkok' },
-            { id: 'TSE', name: 'Tokyo (JP)', exchange: 'TSE (Nikkei 225)', lat: 35.6895, lon: 139.6917, open: '09:00', close: '15:00', breakStart: '11:30', breakEnd: '12:30', dst: false, timezone: 'Asia/Tokyo' }, 
-            { id: 'KSE', name: 'Seoul (KR)', exchange: 'KSE (KOSPI)', lat: 37.5665, lon: 126.9780, open: '09:00', close: '15:30', breakStart: '', breakEnd: '', dst: false, timezone: 'Asia/Seoul' }, 
-            { id: 'HKEX', name: 'Hong Kong (HK)', exchange: 'HKEX (Hang Seng)', lat: 22.3193, lon: 114.1694, open: '09:30', close: '16:00', breakStart: '12:00', breakEnd: '13:00', dst: false, timezone: 'Asia/Hong_Kong' }, 
-            { id: 'SSE', name: 'Shanghai (CN)', exchange: 'SSE (Shanghai)', lat: 31.2304, lon: 121.4737, open: '09:30', close: '15:00', breakStart: '11:30', breakEnd: '13:00', dst: false, timezone: 'Asia/Shanghai' },
-            { id: 'ASX', name: 'Sydney (AU)', exchange: 'ASX', lat: -33.8688, lon: 151.2093, open: '10:00', close: '16:00', breakStart: '', breakEnd: '', dst: true, timezone: 'Australia/Sydney' }, 
-            { id: 'BSE', name: 'Mumbai (IN)', exchange: 'BSE (Sensex)', lat: 18.9750, lon: 72.8258, open: '09:15', close: '15:30', breakStart: '', breakEnd: '', dst: false, timezone: 'Asia/Kolkata' },
-            { id: 'IDX', name: 'Jakarta (ID)', exchange: 'IDX', lat: -6.1754, lon: 106.8272, open: '09:00', close: '16:00', breakStart: '12:00', breakEnd: '13:30', dst: false, timezone: 'Asia/Jakarta' },
-            { id: 'LSE', name: 'London (UK)', exchange: 'LSE (FTSE 100)', lat: 51.5074, lon: 0.1278, open: '08:00', close: '16:30', breakStart: '', breakEnd: '', dst: true, timezone: 'Europe/London' },
-            { id: 'XETRA', name: 'Frankfurt (DE)', exchange: 'XETRA (DAX)', lat: 50.1109, lon: 8.6821, open: '09:00', close: '17:30', breakStart: '', breakEnd: '', dst: true, timezone: 'Europe/Berlin' },
-            { id: 'JSE', name: 'Johannesburg (ZA)', exchange: 'JSE', lat: -26.2041, lon: 28.0473, open: '09:00', close: '17:00', breakStart: '', breakEnd: '', dst: false, timezone: 'Africa/Johannesburg' },
-            { id: 'TASE', name: 'Tel Aviv (IL)', exchange: 'TASE (TA-35)', lat: 32.0853, lon: 34.7818, open: '09:45', close: '16:30', breakStart: '', breakEnd: '', dst: true, timezone: 'Asia/Jerusalem' }, 
-            { id: 'TADAWUL', name: 'Riyadh (SA)', exchange: 'Tadawul', lat: 24.7136, lon: 46.6069, open: '10:00', close: '15:00', breakStart: '', breakEnd: '', dst: false, timezone: 'Asia/Riyadh' },
-            { id: 'NYSE', name: 'New York (US)', exchange: 'NYSE / NASDAQ', lat: 40.7128, lon: -74.0060, open: '09:30', close: '16:00', breakStart: '', breakEnd: '', dst: true, timezone: 'America/New_York' },
-            { id: 'TSX', name: 'Toronto (CA)', exchange: 'TSX', lat: 43.6532, lon: -79.3832, open: '09:30', close: '16:00', breakStart: '', breakEnd: '', dst: true, timezone: 'America/Toronto' },
-            { id: 'BMV', name: 'Mexico City (MX)', exchange: 'BMV', lat: 19.4326, lon: -99.1332, open: '08:30', close: '15:00', breakStart: '', breakEnd: '', dst: true, timezone: 'America/Mexico_City' }, 
-            { id: 'B3', name: 'São Paulo (BR)', exchange: 'B3 (Ibovespa)', lat: -23.5505, lon: -46.6333, open: '10:00', close: '17:00', breakStart: '', breakEnd: '', dst: true, timezone: 'America/Sao_Paulo' }, 
-            { id: 'MOEX', name: 'Moscow (RU)', exchange: 'MOEX', lat: 55.7558, lon: 37.6173, open: '09:50', close: '18:50', breakStart: '', breakEnd: '', dst: false, timezone: 'Europe/Moscow' },
-            { id: 'EURONEXT', name: 'Paris (FR)', exchange: 'Euronext', lat: 48.8566, lon: 2.3522, open: '09:00', close: '17:30', breakStart: '', breakEnd: '', dst: true, timezone: 'Europe/Paris' },
-            { id: 'SIX', name: 'Zurich (CH)', exchange: 'SIX', lat: 47.3769, lon: 8.5417, open: '09:00', close: '17:30', breakStart: '', breakEnd: '', dst: true, timezone: 'Europe/Zurich' },
+            { id: 'TSE', name: 'Tokyo (JP)', exchange: 'Nikkei 225', lat: 35.6895, lon: 139.6917, open: '09:00', close: '15:00', breakStart: '11:30', breakEnd: '12:30', dst: false, timezone: 'Asia/Tokyo' }, 
+            { id: 'KSE', name: 'Seoul (KR)', exchange: 'KOSPI', lat: 37.5665, lon: 126.9780, open: '09:00', close: '15:30', breakStart: '', breakEnd: '', dst: false, timezone: 'Asia/Seoul' }, 
+            { id: 'HKEX', name: 'Hong Kong (HK)', exchange: 'Hang Seng', lat: 22.3193, lon: 114.1694, open: '09:30', close: '16:00', breakStart: '12:00', breakEnd: '13:00', dst: false, timezone: 'Asia/Hong_Kong' }, 
+            { id: 'SSE', name: 'Shanghai (CN)', exchange: 'Shanghai', lat: 31.2304, lon: 121.4737, open: '09:30', close: '15:00', breakStart: '11:30', breakEnd: '13:00', dst: false, timezone: 'Asia/Shanghai' },
+            { id: 'ASX', name: 'Sydney (AU)', exchange: 'ASX 200', lat: -33.8688, lon: 151.2093, open: '10:00', close: '16:00', breakStart: '', breakEnd: '', dst: true, timezone: 'Australia/Sydney' }, 
+            { id: 'BSE', name: 'Mumbai (IN)', exchange: 'Sensex', lat: 18.9750, lon: 72.8258, open: '09:15', close: '15:30', breakStart: '', breakEnd: '', dst: false, timezone: 'Asia/Kolkata' },
+            { id: 'IDX', name: 'Jakarta (ID)', exchange: 'JCI', lat: -6.1754, lon: 106.8272, open: '09:00', close: '16:00', breakStart: '12:00', breakEnd: '13:30', dst: false, timezone: 'Asia/Jakarta' },
+            { id: 'LSE', name: 'London (UK)', exchange: 'FTSE 100', lat: 51.5074, lon: 0.1278, open: '08:00', close: '16:30', breakStart: '', breakEnd: '', dst: true, timezone: 'Europe/London' },
+            { id: 'XETRA', name: 'Frankfurt (DE)', exchange: 'DAX', lat: 50.1109, lon: 8.6821, open: '09:00', close: '17:30', breakStart: '', breakEnd: '', dst: true, timezone: 'Europe/Berlin' },
+            { id: 'JSE', name: 'Johannesburg (ZA)', exchange: 'JSE All', lat: -26.2041, lon: 28.0473, open: '09:00', close: '17:00', breakStart: '', breakEnd: '', dst: false, timezone: 'Africa/Johannesburg' },
+            { id: 'TASE', name: 'Tel Aviv (IL)', exchange: 'TA-35', lat: 32.0853, lon: 34.7818, open: '09:45', close: '16:30', breakStart: '', breakEnd: '', dst: true, timezone: 'Asia/Jerusalem' }, 
+            { id: 'TADAWUL', name: 'Riyadh (SA)', exchange: 'Tadawul All', lat: 24.7136, lon: 46.6069, open: '10:00', close: '15:00', breakStart: '', breakEnd: '', dst: false, timezone: 'Asia/Riyadh' },
+            { id: 'NYSE', name: 'New York (US)', exchange: 'S&P 500', lat: 40.7128, lon: -74.0060, open: '09:30', close: '16:00', breakStart: '', breakEnd: '', dst: true, timezone: 'America/New_York' },
+            { id: 'TSX', name: 'Toronto (CA)', exchange: 'TSX Comp', lat: 43.6532, lon: -79.3832, open: '09:30', close: '16:00', breakStart: '', breakEnd: '', dst: true, timezone: 'America/Toronto' },
+            { id: 'BMV', name: 'Mexico City (MX)', exchange: 'S&P/BMV IPC', lat: 19.4326, lon: -99.1332, open: '08:30', close: '15:00', breakStart: '', breakEnd: '', dst: true, timezone: 'America/Mexico_City' }, 
+            { id: 'B3', name: 'São Paulo (BR)', exchange: 'Ibovespa', lat: -23.5505, lon: -46.6333, open: '10:00', close: '17:00', breakStart: '', breakEnd: '', dst: true, timezone: 'America/Sao_Paulo' }, 
+            { id: 'MOEX', name: 'Moscow (RU)', exchange: 'MOEX Russia', lat: 55.7558, lon: 37.6173, open: '09:50', close: '18:50', breakStart: '', breakEnd: '', dst: false, timezone: 'Europe/Moscow' },
+            { id: 'EURONEXT', name: 'Paris (FR)', exchange: 'CAC 40', lat: 48.8566, lon: 2.3522, open: '09:00', close: '17:30', breakStart: '', breakEnd: '', dst: true, timezone: 'Europe/Paris' },
+            { id: 'SIX', name: 'Zurich (CH)', exchange: 'SMI', lat: 47.3769, lon: 8.5417, open: '09:00', close: '17:30', breakStart: '', breakEnd: '', dst: true, timezone: 'Europe/Zurich' },
         ];
 
         let mymap;
@@ -329,7 +358,54 @@
         const marketMarkers = {};
         let stickyTooltip = null; 
         let markerClusterGroup; 
+        
+        // 🚨 NEW: ข้อมูลตลาดจำลอง
+        const marketData = {}; 
 
+        function initializeMarketData() {
+            markets.forEach(market => {
+                const baseIndex = 10000.00 + (market.lat + market.lon) * 100;
+                marketData[market.id] = {
+                    index: baseIndex, 
+                    change: 0.00,
+                    changePercent: 0.00,
+                    startOfDayIndex: baseIndex // กำหนดค่าเริ่มต้นของวัน
+                };
+            });
+        }
+
+        function updateMarketData() {
+            const volatility = 0.0003; // ความผันผวนต่อการอัปเดต (0.03%)
+
+            markets.forEach(market => {
+                const statusData = getMarketStatus(market);
+                
+                // อัปเดตเฉพาะตลาดที่เปิดหรือใกล้เปิด/ปิดเท่านั้น
+                if (statusData.statusClass === 'open' || statusData.statusClass === 'near') {
+                    let currentData = marketData[market.id];
+                    
+                    // สุ่มการเปลี่ยนแปลงเล็กน้อย
+                    let changeRatio = (Math.random() - 0.5) * volatility;
+                    
+                    // คำนวณดัชนีใหม่
+                    let newIndex = currentData.index * (1 + changeRatio);
+                    
+                    // คำนวณ % Change และ Change เทียบกับค่าเริ่มต้นของวัน
+                    let change = newIndex - currentData.startOfDayIndex;
+                    let changePercent = (change / currentData.startOfDayIndex) * 100;
+
+                    // อัปเดตข้อมูล
+                    marketData[market.id] = {
+                        index: newIndex,
+                        change: change,
+                        changePercent: changePercent,
+                        startOfDayIndex: currentData.startOfDayIndex
+                    };
+                }
+            });
+        }
+        
+        // ... (formatTimeDiff คงเดิม)
         function formatTimeDiff(diffMs) { 
             if (diffMs < 0) return '00:00:00';
             const totalSeconds = Math.floor(diffMs / 1000);
@@ -377,7 +453,8 @@
                     statusClass: 'closed', 
                     tradingHours: `${openTimeStr} – ${closeTimeStr} น. (${nowInMarketZone.zoneAbbr()})`,
                     localTime: nowInMarketZone.format('HH:mm:ss'),
-                    isClosed: true
+                    isClosed: true,
+                    marketData: marketData[market.id] || { index: 0.00, change: 0.00, changePercent: 0.00 }
                 };
             }
 
@@ -397,7 +474,8 @@
                     statusClass: 'closed', 
                     tradingHours: `${openTimeStr} – ${closeTimeStr} น. (${nowInMarketZone.zoneAbbr()})`,
                     localTime: nowInMarketZone.format('HH:mm:ss'),
-                    isClosed: true
+                    isClosed: true,
+                    marketData: marketData[market.id] || { index: 0.00, change: 0.00, changePercent: 0.00 }
                 };
             }
 
@@ -470,7 +548,16 @@
             
             const localTimeStr = nowInMarketZone.format('HH:mm:ss');
 
-            return { status, countdownText, statusClass, tradingHours: tradingHours, localTime: localTimeStr, isClosed: statusClass === 'closed' };
+            // 🚨 NEW: ส่งข้อมูลตลาดจำลองกลับไปด้วย
+            return { 
+                status, 
+                countdownText, 
+                statusClass, 
+                tradingHours: tradingHours, 
+                localTime: localTimeStr, 
+                isClosed: statusClass === 'closed',
+                marketData: marketData[market.id] || { index: 0.00, change: 0.00, changePercent: 0.00 }
+            };
         }
 
 
@@ -478,12 +565,10 @@
 
         function setZoomControlPosition() {
             const header = document.getElementById('mainHeader');
-            // header.offsetHeight จะรวม padding ที่มาจาก safe-area-inset-top แล้ว
             const headerHeight = header.offsetHeight; 
             const zoomControl = document.querySelector('.leaflet-top.leaflet-right');
             
             if (zoomControl) {
-                // 💡 ใช้ความสูง Header ที่ปรับ Safe Area แล้ว + 30px
                 zoomControl.style.top = `${headerHeight + 30}px`; 
             }
         }
@@ -506,7 +591,6 @@
              
              setMapTileLayer(document.body.classList.contains('dark-mode')); 
              
-             // หน่วงเวลาเล็กน้อยเพื่อให้ CSS Render ก่อนคำนวณความสูง Header
              setTimeout(() => {
                  mymap.invalidateSize(true); 
                  setZoomControlPosition();
@@ -568,6 +652,9 @@
             if (timeElement) { timeElement.textContent = now.toLocaleTimeString('th-TH', timeOptions); }
             if (dateElement) { dateElement.textContent = now.toLocaleDateString('th-TH', dateOptions); }
             
+            // 🚨 NEW: อัปเดตข้อมูลจำลอง
+            updateMarketData(); 
+            
             let allMarketsClosed = true;
             
             markets.forEach(market => {
@@ -583,7 +670,41 @@
                 else if (currentStatusClass === 'closed') { statusColorVar = 'var(--closed-color)'; statusColorHex = '#dc3545'; }
                 else { statusColorVar = 'var(--near-color)'; statusColorHex = '#ffc107'; }
                 
-                // Tooltip Content for Horizontal Rectangle Readability
+                // 🚨 NEW: สร้าง HTML สำหรับแสดงข้อมูลดัชนี
+                let marketDataHtml = '';
+                if (statusData.statusClass !== 'closed' && statusData.marketData.index > 0) {
+                    const data = statusData.marketData;
+                    const indexValue = data.index.toFixed(2);
+                    const changeValue = data.change.toFixed(2);
+                    const changePercentValue = data.changePercent.toFixed(2);
+                    
+                    let changeClass = 'data-change-neutral';
+                    let sign = '';
+                    if (data.changePercent > 0.01) {
+                        changeClass = 'data-change-positive';
+                        sign = '+';
+                    } else if (data.changePercent < -0.01) {
+                        changeClass = 'data-change-negative';
+                    }
+
+                    marketDataHtml = `
+                        <hr style="border: none; border-top: 1px solid var(--border-color); margin: 8px 0;">
+                        
+                        <div class="tooltip-data-line">
+                            <div class="data-index-value">${market.exchange}</div>
+                            <div class="${changeClass}">${indexValue}</div>
+                        </div>
+                        
+                        <div class="tooltip-data-line" style="font-size: 0.9em; margin-top: 2px; font-weight: 500;">
+                            <div>**เปลี่ยนแปลงวันนี้**</div>
+                            <div class="${changeClass}">
+                                ${sign}${Math.abs(changeValue).toFixed(2)} (${sign}${Math.abs(changePercentValue).toFixed(2)}%)
+                            </div>
+                        </div>
+                    `;
+                }
+
+                // 🚨 UPDATE: Tooltip Content (เพิ่ม marketDataHtml)
                 const tooltipContent = `
                     <div class="market-tooltip-content">
                         <div style="font-weight: 700; font-size: 1.1em; color: var(--toggle-bg-checked); margin-bottom: 5px;">${market.name}</div>
@@ -597,7 +718,7 @@
                         
                         <div>${statusData.countdownText}</div>
                         
-                        <hr style="border: none; border-top: 1px solid var(--border-color); margin: 8px 0;">
+                        ${marketDataHtml} <hr style="border: none; border-top: 1px solid var(--border-color); margin: 8px 0;">
                         
                         <div class="tooltip-time-info" style="text-align: left; opacity: 1; font-size: 0.85em;">
                             **เวลาทำการ:** ${statusData.tradingHours}
@@ -763,6 +884,7 @@
         });
         
         document.addEventListener('DOMContentLoaded', () => {
+             initializeMarketData(); // 🚨 NEW: Initialise data
              initMap();
              setupSearchFunctionality(); 
              

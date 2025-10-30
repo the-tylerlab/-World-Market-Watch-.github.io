@@ -20,6 +20,7 @@
             --bg-color: #f4f7f9; 
             --card-bg: #ffffff;
             --text-color: #333333;
+            --light-text-color: #777777; /* NEW: สำหรับ Remark */
             --open-color: #28a745; 
             --closed-color: #dc3545; 
             --near-color: #ffc107; 
@@ -43,8 +44,8 @@
             --bg-color: #1a1a2e; 
             --card-bg: rgba(45, 49, 53, 0.95); 
             --text-color: #f1f1f1;
+            --light-text-color: #b0b0b0; /* NEW: สำหรับ Remark */
             --border-color: #3e4155; 
-            --light-text-color: #b0b0b0; 
             --toggle-bg: #555;
             --toggle-bg-checked: #007bff;
             
@@ -177,7 +178,7 @@
             font-weight: 500;
         }
 
-        /* 🚨 NEW: Style สำหรับ Market Data */
+        /* 🚨 Style สำหรับ Market Data */
         .tooltip-data-line {
             display: flex;
             justify-content: space-between;
@@ -204,6 +205,15 @@
         .data-change-neutral {
              color: var(--near-color); 
              font-weight: 700;
+        }
+        
+        /* 🚨 NEW: Style สำหรับ Remark เตือน */
+        .simulation-remark {
+            font-size: 0.75em;
+            color: var(--light-text-color); /* ใช้สีเทาอ่อน/เข้ม */
+            margin-top: 5px;
+            text-align: right;
+            font-style: italic;
         }
         
         .footer {
@@ -312,7 +322,7 @@
     </div>
 
     <div class="footer">
-        2025 Copyright/Developer by thetylerlab | Version 8.0 (Simulated Market Data & Final Notch Fix)
+        2025 Copyright/Developer by thetylerlab | Version 8.1 (Simulated Data with Remark & Final Notch Fix)
     </div>
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -364,12 +374,13 @@
 
         function initializeMarketData() {
             markets.forEach(market => {
+                // ค่าฐานสำหรับการคำนวณดัชนีจำลอง (ใช้ lat/lon เพื่อให้ค่าเริ่มต้นต่างกัน)
                 const baseIndex = 10000.00 + (market.lat + market.lon) * 100;
                 marketData[market.id] = {
                     index: baseIndex, 
                     change: 0.00,
                     changePercent: 0.00,
-                    startOfDayIndex: baseIndex // กำหนดค่าเริ่มต้นของวัน
+                    startOfDayIndex: baseIndex 
                 };
             });
         }
@@ -405,7 +416,6 @@
             });
         }
         
-        // ... (formatTimeDiff คงเดิม)
         function formatTimeDiff(diffMs) { 
             if (diffMs < 0) return '00:00:00';
             const totalSeconds = Math.floor(diffMs / 1000);
@@ -437,6 +447,7 @@
             const holidays = marketHolidays[market.id] || [];
             const isHoliday = holidays.includes(todayDateStr);
             
+            // 1. ตรวจสอบวันหยุดราชการ
             if (isHoliday) {
                 let nextWorkingDay = nowInMarketZone.clone().add(1, 'day');
                 while (nextWorkingDay.day() === 0 || nextWorkingDay.day() === 6 || holidays.includes(nextWorkingDay.format('YYYY-MM-DD'))) {
@@ -458,6 +469,7 @@
                 };
             }
 
+            // 2. ตรวจสอบวันหยุดสุดสัปดาห์
             if (dayOfWeek === 0 || dayOfWeek === 6) { 
                 nextOpen = nowInMarketZone.clone().day(dayOfWeek === 0 ? 1 : 8); 
                 while (nextOpen.day() === 0 || nextOpen.day() === 6 || holidays.includes(nextOpen.format('YYYY-MM-DD'))) {
@@ -479,11 +491,13 @@
                 };
             }
 
+            // 3. กำหนดเวลา Open/Close/Break
             let openTime = nowInMarketZone.clone().set({ hour: parseInt(openTimeStr.split(':')[0]), minute: parseInt(openTimeStr.split(':')[1]), second: 0, millisecond: 0 });
             let closeTime = nowInMarketZone.clone().set({ hour: parseInt(closeTimeStr.split(':')[0]), minute: parseInt(closeTimeStr.split(':')[1]), second: 0, millisecond: 0 });
             let breakStart = breakStartStr ? nowInMarketZone.clone().set({ hour: parseInt(breakStartStr.split(':')[0]), minute: parseInt(breakStartStr.split(':')[1]), second: 0, millisecond: 0 }) : null;
             let breakEnd = breakEndStr ? nowInMarketZone.clone().set({ hour: parseInt(breakEndStr.split(':')[0]), minute: parseInt(breakEndStr.split(':')[1]), second: 0, millisecond: 0 }) : null;
 
+            // จัดการกรณีตลาดเปิดข้ามวัน (เช่น ปิดเช้าวันถัดไป)
             if (openTime.isAfter(closeTime)) { 
                 if (nowInMarketZone.isBefore(closeTime)) { openTime.subtract(1, 'day'); } else { closeTime.add(1, 'day'); }
             } else {
@@ -499,6 +513,7 @@
                 }
             }
             
+            // จัดการกรณีพักข้ามวัน
             if (breakStart && breakEnd && breakStart.isAfter(breakEnd)) {
                  if (nowInMarketZone.isBefore(breakEnd)) { breakStart.subtract(1, 'day'); } else { breakEnd.add(1, 'day'); }
             }
@@ -509,18 +524,21 @@
             let nextEventTime;
             
             if (isOpen) {
+                // สถานะ: เปิดทำการ
                 nextEventTime = isDuringBreak ? breakEnd : closeTime;
                 diffMs = nextEventTime.diff(nowInMarketZone);
                 status = '✅ เปิดทำการ';
                 statusClass = 'open';
                 countdownText = `เหลือเวลาปิด: ${formatTimeDiff(diffMs)}`;
             } else if (isDuringBreak) {
+                // สถานะ: พักกลางวัน
                 nextEventTime = breakEnd;
                 diffMs = nextEventTime.diff(nowInMarketZone);
                 status = '⏸️ พักกลางวัน';
                 statusClass = 'near';
                 countdownText = `จะเปิดอีกครั้งใน: ${formatTimeDiff(diffMs)}`;
             } else {
+                // สถานะ: ปิดทำการ
                 status = '❌ ปิดทำการ';
                 statusClass = 'closed';
                 nextEventTime = openTime; 
@@ -533,6 +551,7 @@
                 }
             }
 
+            // สถานะ: ใกล้เปิด/ปิด (15 นาที)
             const fifteenMinutes = moment.duration(15, 'minutes');
             if (!isOpen && nextEventTime.diff(nowInMarketZone) <= fifteenMinutes.asMilliseconds() && nextEventTime.diff(nowInMarketZone) > 0) {
                  status = '🔔 ใกล้เปิดแล้ว';
@@ -548,7 +567,6 @@
             
             const localTimeStr = nowInMarketZone.format('HH:mm:ss');
 
-            // 🚨 NEW: ส่งข้อมูลตลาดจำลองกลับไปด้วย
             return { 
                 status, 
                 countdownText, 
@@ -652,7 +670,7 @@
             if (timeElement) { timeElement.textContent = now.toLocaleTimeString('th-TH', timeOptions); }
             if (dateElement) { dateElement.textContent = now.toLocaleDateString('th-TH', dateOptions); }
             
-            // 🚨 NEW: อัปเดตข้อมูลจำลอง
+            // อัปเดตข้อมูลจำลอง
             updateMarketData(); 
             
             let allMarketsClosed = true;
@@ -670,7 +688,7 @@
                 else if (currentStatusClass === 'closed') { statusColorVar = 'var(--closed-color)'; statusColorHex = '#dc3545'; }
                 else { statusColorVar = 'var(--near-color)'; statusColorHex = '#ffc107'; }
                 
-                // 🚨 NEW: สร้าง HTML สำหรับแสดงข้อมูลดัชนี
+                // สร้าง HTML สำหรับแสดงข้อมูลดัชนี (รวม Remark)
                 let marketDataHtml = '';
                 if (statusData.statusClass !== 'closed' && statusData.marketData.index > 0) {
                     const data = statusData.marketData;
@@ -701,10 +719,14 @@
                                 ${sign}${Math.abs(changeValue).toFixed(2)} (${sign}${Math.abs(changePercentValue).toFixed(2)}%)
                             </div>
                         </div>
+                        
+                        <div class="simulation-remark">
+                            *ข้อมูลดัชนีนี้เป็นค่าจำลองเท่านั้น
+                        </div>
                     `;
                 }
 
-                // 🚨 UPDATE: Tooltip Content (เพิ่ม marketDataHtml)
+                // Tooltip Content 
                 const tooltipContent = `
                     <div class="market-tooltip-content">
                         <div style="font-weight: 700; font-size: 1.1em; color: var(--toggle-bg-checked); margin-bottom: 5px;">${market.name}</div>
@@ -884,7 +906,7 @@
         });
         
         document.addEventListener('DOMContentLoaded', () => {
-             initializeMarketData(); // 🚨 NEW: Initialise data
+             initializeMarketData(); 
              initMap();
              setupSearchFunctionality(); 
              
